@@ -1,7 +1,7 @@
 <template>
   <aside class="sidebar">
     <div class="brand">
-      <div class="logo">🎓</div>
+      <i class="fa-solid fa-graduation-cap logo"></i>
       <div class="title">VestibulandoBot</div>
     </div>
 
@@ -40,7 +40,7 @@ const initials = computed(() => {
 
 <style scoped>
 .sidebar {
-  background: #ffffffd9;
+  background: #1a3850;
   backdrop-filter: blur(6px);
   border-radius: 16px;
   padding: 16px;
@@ -48,7 +48,9 @@ const initials = computed(() => {
   display: grid;
   grid-template-rows: auto auto 1fr auto;
   gap: 16px;
-  min-height: calc(100vh - 48px);
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
 }
 
 .brand {
@@ -56,8 +58,15 @@ const initials = computed(() => {
   align-items: center;
   gap: 10px;
 }
-.logo { font-size: 28px; }
-.title { font-weight: 800; letter-spacing: .3px; }
+.logo { 
+  font-size: 28px; 
+  color: #ffffff;
+}
+.title { 
+  font-weight: 800; 
+  letter-spacing: .3px; 
+  color: #ffffff;
+}
 
 .user {
   display: grid;
@@ -66,39 +75,75 @@ const initials = computed(() => {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   background: #fafafa;
+  text-align: center;
 }
 .avatar {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: #42b983;
+  background: #079685;
   color: white;
   display: grid;
   place-items: center;
   font-weight: 800;
+  margin: 0 auto;
 }
-.name { font-weight: 700; }
-.email { font-size: 12px; color: #6b7280; }
+.name { 
+  font-weight: 700;
+}
+.email { 
+  font-size: 12px; 
+  color: #6b7280; 
+}
 
-.nav { display: grid; gap: 8px; }
+.nav { 
+  display: grid; 
+  gap: 12px;
+}
+
 .link {
-  display: block;
+  display: flex;                /* Flex para centralizar */
+  align-items: center;          /* Centraliza vertical */
+  justify-content: center;      /* Centraliza horizontal */
   background: #f3f4f6;
   color: #111827;
-  padding: 10px 12px;
+  padding: 14px;
   border-radius: 10px;
   text-decoration: none;
-  transition: background .2s;
+  font-weight: 600;
+  transition: background-color 0.3s, color 0.3s, transform 0.1s;
 }
-.link:hover { background: #e5e7eb; }
+
+/* Hover bonito */
+.link:hover {
+  background-color: #079685;
+  color: #fff;
+}
+
+/* Efeito clique */
+.link:active {
+  transform: scale(0.97);
+}
+
+/* Quando ativo pela rota */
+.link.router-link-exact-active {
+  background-color: #079685;
+  color: #fff;
+  font-weight: bold;
+}
 
 .logout {
   background: #ef4444;
   color: #fff;
   border: 0;
-  padding: 10px 12px;
+  padding: 12px;
   border-radius: 10px;
   font-weight: 700;
   cursor: pointer;
+  width: 100%;
+  transition: background-color 0.3s;
+}
+.logout:hover {
+  background-color: #ff0000;
 }
 </style>

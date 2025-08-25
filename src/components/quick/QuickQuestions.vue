@@ -32,9 +32,11 @@ const questions = [
   border-radius: 16px;
   padding: 16px;
   box-shadow: 0 6px 24px rgba(0,0,0,.08);
-  min-height: calc(100vh - 48px);
   display: grid;
   grid-template-rows: auto 1fr;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
 }
 h3 { margin: 0 0 12px; }
 .list {
@@ -50,6 +52,6 @@ h3 { margin: 0 0 12px; }
   cursor: pointer;
   transition: background .2s, transform .02s;
 }
-.item:hover { background: #e5e7eb; }
+.item:hover { background: #079685; }
 .item:active { transform: translateY(1px); }
 </style>

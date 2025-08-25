@@ -88,7 +88,7 @@ input:focus {
 }
 .submit {
   margin-top: 8px;
-  background: #42b983;
+  background: #00a37f;
   color: #fff;
   border: 0;
   border-radius: 8px;

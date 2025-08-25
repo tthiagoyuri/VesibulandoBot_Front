@@ -1,90 +1,59 @@
 <template>
   <div class="home">
-    <div class="container">
-      <!-- Coluna Esquerda -->
-      <AppSidebar
-        :user="user"
-        @logout="onLogout"
-      />
+    <div class="wrap">
+      <header class="head">
+        <h1>Bem-vindo 👋</h1>
+        <p class="head">Escolha um modo para começar</p>
+      </header>
 
-      <!-- Área Central (Chat) -->
-      <ChatWindow
-        :messages="messages"
-        :sending="sending"
-        @send="handleSend"
-      />
+      <section class="grid">
+        <RouterLink class="card study" :to="{ name: 'Study' }">
+          <div class="icon">📚</div>
+          <h2>Modo Estudo</h2>
+          <p>Trilhas, materiais e chat de estudo.</p>
+          <span class="go">Ir para Estudo →</span>
+        </RouterLink>
 
-      <!-- Coluna Direita (Perguntas rápidas) -->
-      <QuickQuestions @pick="handleQuickPick" />
+        <RouterLink class="card challenge" :to="{ name: 'Challenge' }">
+          <div class="icon">🏆</div>
+          <h2>Modo Desafio</h2>
+          <p>Questões, desafios e gamificação.</p>
+          <span class="go">Ir para Desafio →</span>
+        </RouterLink>
+
+        <RouterLink class="card performance" :to="{ name: 'Performance' }">
+          <div class="icon">📈</div>
+          <h2>Performance</h2>
+          <p>Métricas do seu desempenho.</p>
+          <span class="go">Ver Performance →</span>
+        </RouterLink>
+
+        <RouterLink class="card admin" :to="{ name: 'Admin' }">
+          <div class="icon">🛠️</div>
+          <h2>Administração</h2>
+          <p>Gestão de conteúdos e usuários.</p>
+          <span class="go">Abrir Administração →</span>
+        </RouterLink>
+      </section>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { getCurrentUser, logout } from '../services/auth.js'
-import { sendMessageToBot } from '../services/chat.js'
-
-import AppSidebar from '../components/layout/AppSidebar.vue'
-import ChatWindow from '../components/chat/ChatWindow.vue'
-import QuickQuestions from '../components/quick/QuickQuestions.vue'
-
-const router = useRouter()
-const user = ref(getCurrentUser())
-const messages = ref([]) // { from: 'bot'|'user', text: string, at: number }
-const sending = ref(false)
-
-onMounted(() => {
-  if (!user.value) {
-    router.push({ name: 'Login' })
-    return
-  }
-  // Mensagem de boas-vindas
-  messages.value.push({
-    from: 'bot',
-    text: `Olá, ${user.value.name}! Como posso te ajudar hoje?`,
-    at: Date.now(),
-  })
-})
-
-function formatUserText(text) {
-  return (text || '').trim()
-}
-
-async function handleSend(text) {
-  const clean = formatUserText(text)
-  if (!clean) return
-
-  // adiciona mensagem do usuário
-  messages.value.push({ from: 'user', text: clean, at: Date.now() })
-  sending.value = true
-
-  // chama o bot (mock)
-  const reply = await sendMessageToBot(clean)
-  messages.value.push({ from: 'bot', text: reply, at: Date.now() })
-  sending.value = false
-}
-
-function handleQuickPick(text) {
-  handleSend(text)
-}
-
-function onLogout() {
-  logout()
-  router.push({ name: 'Login' })
-}
+import { RouterLink } from 'vue-router'
 </script>
 
 <style scoped>
 .home {
   min-height: 100vh;
-  /* Gradiente animado de fundo */
-  background: linear-gradient(-45deg, #ff4e50, #fc913a, #f9d423, #24c6dc, #514a9d);
+  /* mantém seu gradiente animado */
+  background: linear-gradient(#081d41, #0b3c71);
   background-size: 400% 400%;
   animation: gradientAnimation 15s ease infinite;
-  padding: 24px;
+  padding: 32px 20px;
   box-sizing: border-box;
+  display: grid;
+  place-items: center;
 }
 
 @keyframes gradientAnimation {
@@ -93,23 +62,61 @@ function onLogout() {
   100% { background-position: 0% 50%; }
 }
 
-.container {
+.wrap {
+  width: 100%;
+  max-width: 1100px;
+}
+
+.head {
+  text-align: center;
+  color: #ffffff;
+  margin-bottom: 20px;
+}
+.head h1 { margin: 0 0 6px; }
+.head p { opacity: .9; margin: 0; }
+
+.grid {
   display: grid;
-  grid-template-columns: 280px 1fr 280px;
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
-  max-width: 1300px;
-  margin: 0 auto;
 }
 
 @media (max-width: 1100px) {
-  .container {
-    grid-template-columns: 240px 1fr 240px;
-  }
+  .grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .grid { grid-template-columns: 1fr; }
 }
 
-@media (max-width: 900px) {
-  .container {
-    grid-template-columns: 1fr;
-  }
+.card {
+  display: grid;
+  gap: 8px;
+  background: #f7f4ee;
+  backdrop-filter: blur(6px);
+  border-radius: 16px;
+  padding: 18px;
+  text-decoration: none;
+  color: #111827;
+  box-shadow: 0 6px 24px rgba(0,0,0,.08);
+  transition: transform .08s ease, box-shadow .2s, background .2s;
 }
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 32px rgba(0,0,0,.12);
+  background: rgb(186, 192, 199);
+}
+.icon { font-size: 28px; }
+h2 { margin: 0; }
+p { margin: 0; color: #374151; }
+.go {
+  margin-top: 6px;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* cores de destaque sutis por modo */
+.card.study { border-left: 6px solid #2555a0; }
+.card.challenge { border-left: 6px solid #1c8a8c; }
+.card.performance { border-left: 6px solid #2154a5; }
+.card.admin { border-left: 6px solid #2d5f70; }
 </style>

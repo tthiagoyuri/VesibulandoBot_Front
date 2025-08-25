@@ -2,8 +2,10 @@
   <section class="chat">
     <header class="chat-header">
       <h2>Chat</h2>
-      <span class="status" :class="{ online: !sending }">
-        {{ sending ? 'Enviando...' : 'Pronto' }}
+      <span class="status" :class="status">
+        <!-- Ícone aparece só quando digitando -->
+        <i v-if="status === 'digitando'" class="fa-solid fa-comment-dots"></i>
+        {{ label }}
       </span>
     </header>
 
@@ -27,6 +29,7 @@
         type="text"
         placeholder="Digite sua pergunta..."
         :disabled="sending"
+        @input="onTyping"
       />
       <button type="submit" :disabled="sending || !draft">Enviar</button>
     </form>
@@ -34,7 +37,7 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, computed } from 'vue'
 
 const props = defineProps({
   messages: { type: Array, default: () => [] },
@@ -44,13 +47,26 @@ const emit = defineEmits(['send'])
 
 const draft = ref('')
 const listEl = ref(null)
+const status = ref('enviado') // 'digitando' | 'enviando' | 'enviado'
 
 function submit() {
-  const text = draft.value
-  if (!text) return
-  emit('send', text)
+  if (!draft.value) return
+  emit('send', draft.value)
   draft.value = ''
+  status.value = 'enviando'
 }
+
+function onTyping() {
+  status.value = draft.value ? 'digitando' : 'enviado'
+}
+
+watch(() => props.sending, (val) => {
+  if (val) {
+    status.value = 'enviando'
+  } else if (!draft.value) {
+    status.value = 'enviado'
+  }
+})
 
 watch(() => props.messages.length, async () => {
   await nextTick()
@@ -68,11 +84,19 @@ function formatTime(ts) {
   const d = new Date(ts)
   return `${two(d.getHours())}:${two(d.getMinutes())}`
 }
+
+const label = computed(() => {
+  switch (status.value) {
+    case 'digitando': return 'Digitando'
+    case 'enviando': return 'Enviando...'
+    default: return 'Enviado'
+  }
+})
 </script>
 
 <style scoped>
 .chat {
-  background: #ffffffd9;
+  background: #e5eaf1;
   backdrop-filter: blur(6px);
   border-radius: 16px;
   padding: 12px;
@@ -80,6 +104,8 @@ function formatTime(ts) {
   display: grid;
   grid-template-rows: auto 1fr auto;
   min-height: calc(100vh - 48px);
+  height: 100%;
+  min-height: 0;
 }
 
 .chat-header {
@@ -87,36 +113,65 @@ function formatTime(ts) {
   align-items: center;
   justify-content: space-between;
   padding: 6px 8px 10px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #909192;
 }
-.status { font-size: 12px; color: #6b7280; }
-.status.online { color: #10b981; }
+.status {
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #6b7280;
+}
+.status.digitando {
+  color: #2563eb; /* azul para digitando */
+}
+.status.enviando {
+  color: #f59e0b; /* laranja para enviando */
+}
+.status.enviado {
+  color: #10b981; /* verde para enviado */
+}
 
 .messages {
   overflow-y: auto;
   padding: 12px 6px;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
+  min-height: 0;
 }
 
 .msg {
   display: flex;
+  width: auto;
+  max-width: 80%;
 }
-.msg.user { justify-content: flex-end; }
-.msg.bot { justify-content: flex-start; }
+
+.msg.user {
+  align-self: flex-end;
+}
+
+.msg.bot {
+  align-self: flex-start; 
+}
 
 .bubble {
-  max-width: 70%;
+  display: inline-block;
   background: #f3f4f6;
   border-radius: 14px;
   padding: 10px 12px;
-  position: relative;
+  word-wrap: break-word;
+  word-break: break-word;
+  max-width: 80%; 
 }
 .msg.user .bubble {
-  background: #42b983;
+  background:#069483;
   color: white;
 }
-.text { margin: 0 0 6px; white-space: pre-wrap; word-break: break-word; }
+.text { 
+    margin: 0 0 6px; white-space: pre-wrap; word-break: break-word; 
+}
 .time {
   font-size: 11px;
   opacity: .8;
@@ -138,7 +193,7 @@ input {
   font-size: 14px;
 }
 button {
-  background: #111827;
+  background: #1c3d56;
   color: #fff;
   border: 0;
   border-radius: 10px;

@@ -49,7 +49,7 @@ async function onSubmit({ email, password }) {
   place-items: center;
 
   /* Fundo com gradiente animado */
-  background: linear-gradient(-45deg, #001aff, #00eeff, #00ff15, #5c6300, #ff0000);
+  background: linear-gradient(#081d41, #0b3c71);
   background-size: 400% 400%;
   animation: gradientAnimation 15s ease infinite;
 
@@ -75,7 +75,7 @@ async function onSubmit({ email, password }) {
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 6px 24px rgba(0,0,0,.08);
-  border-left: #fbff05 9px solid;
+  border-left: #f4de00 9px solid;
 }
 h1 {
   margin: 0 0 16px;
