@@ -23,16 +23,43 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { RouterLink } from 'vue-router'
+import { getCurrentUser } from '../../services/auth.js' // ajuste o caminho se necessário
 
+// Prop continua opcional (compat), mas NÃO é obrigatória
 const props = defineProps({
   user: { type: Object, default: null }
 })
 
+const localUser = ref(null)
+
+function syncUser() {
+  // Se não vier user por prop, busca do serviço de auth
+  if (!props.user) {
+    try {
+      localUser.value = getCurrentUser() || null
+    } catch {
+      localUser.value = null
+    }
+  }
+}
+
+onMounted(() => {
+  syncUser()
+  // Atualiza se outra aba fizer login/logout
+  window.addEventListener('storage', syncUser)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('storage', syncUser)
+})
+
+// Fonte única usada no template
+const user = computed(() => props.user ?? localUser.value)
+
 const initials = computed(() => {
-  if (!props.user?.name) return 'VB'
-  const parts = props.user.name.split(/[.\s_-]+/)
+  if (!user.value?.name) return 'VB'
+  const parts = user.value.name.split(/[.\s_-]+/).filter(Boolean)
   const ini = parts.slice(0, 2).map(p => p[0]?.toUpperCase()).join('')
   return ini || 'VB'
 })

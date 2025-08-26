@@ -6,5 +6,5 @@
 </template>
 <script setup></script>
 <style scoped>
-.page { min-height: 100vh; display: grid; place-items: center; color: #fff; }
+.page { min-height: 100vh; display: grid; place-items: center; color: #ff0000; }
 </style>

@@ -3,7 +3,6 @@
     <div class="container">
       <!-- Coluna Esquerda -->
       <AppSidebar
-        :user="user"
         @logout="onLogout"
       />
 
@@ -105,5 +104,4 @@ function onLogout() {
 @media (max-width: 900px) {
   .container { grid-template-columns: 1fr; }
 }
-
 </style>
