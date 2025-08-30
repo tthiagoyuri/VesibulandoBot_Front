@@ -2,52 +2,74 @@
   <teleport to="body">
     <div v-if="modelValue" class="overlay" @click.self="close">
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="cfg-title">
+        <!-- Cabeçalho -->
         <header class="modal-header">
           <h2 id="cfg-title">Configurar Desafio</h2>
           <button class="icon-btn" @click="close" aria-label="Fechar">✕</button>
         </header>
 
+        <!-- Corpo -->
         <section class="modal-body">
-          <div class="grid">
-            <!-- Simulado -->
-            <div class="field">
-              <label for="m-simulado">Simulado</label>
-              <select id="m-simulado" v-model="local.simulado">
-                <option v-for="opt in simulados" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-              </select>
-            </div>
+          <!-- Tipo de simulado -->
+          <div class="field">
+            <label for="m-simulado">Tipo de simulado</label>
+            <select id="m-simulado" v-model="local.simulado">
+              <option v-for="opt in simulados" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+          </div>
 
-            <!-- Matéria / Categoria -->
-            <div class="field">
-              <label for="m-categoria">Matéria / Categoria</label>
-              <select id="m-categoria" v-model="local.categoria">
-                <option v-for="opt in categorias" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-              </select>
+          <!-- Matéria -->
+          <div class="field">
+            <label>Matéria</label>
+            <div class="pills">
+              <button
+                v-for="cat in categorias"
+                :key="cat.value"
+                class="pill"
+                :class="{ active: local.categoria === cat.value }"
+                @click="local.categoria = cat.value"
+                type="button"
+              >
+                {{ cat.label }}
+              </button>
             </div>
+          </div>
 
-            <!-- Dificuldade -->
-            <div class="field">
-              <label for="m-dif">Nível de dificuldade</label>
-              <select id="m-dif" v-model="local.dificuldade">
-                <option value="facil">Fácil</option>
-                <option value="medio">Médio</option>
-                <option value="dificil">Difícil</option>
-              </select>
+          <!-- Dificuldade -->
+          <div class="field">
+            <label>Dificuldade</label>
+            <div class="pills">
+              <button
+                v-for="dif in difOptions"
+                :key="dif.value"
+                class="pill"
+                :class="{ active: local.dificuldade === dif.value }"
+                @click="local.dificuldade = dif.value"
+                type="button"
+              >
+                {{ dif.label }}
+              </button>
             </div>
+          </div>
 
-            <!-- Ano da prova -->
-            <div class="field">
-              <label for="m-ano">Ano da prova</label>
-              <select id="m-ano" v-model="local.ano">
-                <option v-for="y in anos" :key="y" :value="y">{{ y }}</option>
-              </select>
+          <!-- Ano -->
+          <div class="field">
+            <label>Ano</label>
+            <div class="year-row">
+              <button class="year-arrow" type="button" @click="decYear" :disabled="local.ano <= minYear">‹</button>
+              <div class="year-box">{{ local.ano }}</div>
+              <button class="year-arrow" type="button" @click="incYear" :disabled="local.ano >= currentYear">›</button>
+              <span class="year-hint"></span>
             </div>
           </div>
         </section>
 
+        <!-- Rodapé -->
         <footer class="modal-footer">
-          <button class="btn" @click="close">Cancelar</button>
-          <button class="btn btn-primary" @click="apply">Salvar</button>
+          <button class="btn btn-ghost" @click="close">Cancelar</button>
+          <button class="btn btn-accent" @click="apply">Iniciar</button>
         </footer>
       </div>
     </div>
@@ -68,13 +90,37 @@ const props = defineProps({
       ano: new Date().getFullYear()
     })
   },
-  // Em templates o ref é desenv. automaticamente; então aqui chega como objeto
-  simulados: { type: Array, required: true },
-  categoriasPorSimulado: { type: Object, required: true }
+  simulados: { type: Array, required: true } // mantém vindo do pai
 })
 const emit = defineEmits(['update:modelValue', 'apply'])
 
-/* ----- Estado local ----- */
+/** ---------- Mapa de categorias (agora DENTRO da modal) ---------- */
+const categoriasBase = [
+  { label: 'Todas as matérias', value: 'todas' },
+  { label: 'Matemática', value: 'matematica' },
+  { label: 'Linguagens', value: 'linguagens' },
+  { label: 'Ciências da Natureza', value: 'natureza' },
+  { label: 'Ciências Humanas', value: 'humanas' }
+]
+const categoriasMap = {
+  'enem-mix': categoriasBase,
+  'enem-2022': [
+    { label: 'Todas as matérias', value: 'todas' },
+    { label: '1º dia (Linguagens e Humanas)', value: '1dia' },
+    { label: '2º dia (Natureza e Matemática)', value: '2dia' }
+  ],
+  'fuvest': [
+    { label: 'Primeira fase', value: 'fase1' },
+    { label: 'Segunda fase', value: 'fase2' }
+  ],
+  'unicamp': [
+    { label: 'Prova 1', value: 'p1' },
+    { label: 'Prova 2', value: 'p2' }
+  ],
+  default: categoriasBase
+}
+
+/* Estado local */
 const local = reactive({
   simulado: props.initial.simulado,
   categoria: props.initial.categoria,
@@ -82,13 +128,21 @@ const local = reactive({
   ano: props.initial.ano
 })
 
-/* ----- Categorias disponíveis p/ o simulado selecionado ----- */
-const categorias = computed(() => {
-  const map = props.categoriasPorSimulado || {}
-  return map[local.simulado] || map.default || []
-})
+/* Opções derivadas */
+const categorias = computed(() => categoriasMap[local.simulado] || categoriasMap.default || [])
+const difOptions = [
+  { value: 'facil',   label: 'Fácil' },
+  { value: 'medio',   label: 'Médio' },
+  { value: 'dificil', label: 'Difícil' }
+]
 
-/* ----- Helpers ----- */
+/* Ano (stepper) */
+const currentYear = new Date().getFullYear()
+const minYear = 2015
+function decYear() { if (local.ano > minYear) local.ano-- }
+function incYear() { if (local.ano < currentYear) local.ano++ }
+
+/* Helpers */
 function ensureCategoriaValida() {
   if (!categorias.value.length) return
   if (!categorias.value.find(c => c.value === local.categoria)) {
@@ -100,89 +154,168 @@ function resetFromInitial() {
   ensureCategoriaValida()
 }
 
-/* ----- Watches ----- */
-// Quando abrir a modal (ou mudar initial no pai), sincroniza o estado
-watch(() => props.modelValue, (open) => {
-  if (open) resetFromInitial()
-})
+/* Watches */
+watch(() => props.modelValue, (open) => { if (open) resetFromInitial() })
 watch(() => props.initial, () => resetFromInitial(), { deep: true })
+watch(() => local.simulado, ensureCategoriaValida)
 
-// Se o simulado mudar, garante categoria válida
-watch(() => local.simulado, () => ensureCategoriaValida())
-
-/* ----- Anos ----- */
-const currentYear = new Date().getFullYear()
-const anos = computed(() => {
-  const arr = []
-  for (let y = currentYear; y >= 2015; y--) arr.push(y)
-  return arr
-})
-
-/* ----- Ações ----- */
+/* Ações */
 function close() { emit('update:modelValue', false) }
-function apply() { emit('apply', { ...local }); close() }
+function apply() {
+  const simuladoLabel = (props.simulados || []).find(s => s.value === local.simulado)?.label || ''
+  const categoriaLabel = categorias.value.find(c => c.value === local.categoria)?.label || ''
+  const dificuldadeLabel = difOptions.find(d => d.value === local.dificuldade)?.label || ''
+
+  emit('apply', {
+    ...local,
+    simuladoLabel,
+    categoriaLabel,
+    dificuldadeLabel
+  })
+  close()
+}
 </script>
 
 <style scoped>
-:root,
-:host {
-  --c-primary:#1E3A5F; --c-accent:#4ADE80; --c-bg:#F9FAFB; --c-surface:#FFFFFF; --c-text:#1F2937;
-  --bd-soft:rgba(30,58,95,.12); --bd-strong:rgba(30,58,95,.18); --focus:0 0 0 3px rgba(74,222,128,.45);
+/* ===== Paleta ===== */
+:root, :host{
+  --c-primary:#1E3A5F;
+  --c-accent:#4ADE80;
+  --c-bg:#F9FAFB;
+  --c-surface:#FFFFFF;
+  --c-text:#1F2937;
+
+  --glass: rgba(30,58,95,.92);
+  --bd-soft: rgba(255,255,255,.16);
+  --bd-strong: rgba(255,255,255,.26);
+  --shadow: 0 30px 80px rgba(2,6,23,.35);
 }
 
-.overlay {
-  position: fixed; inset: 0; background: rgba(15,23,42,.55);
-  display: grid; place-items: center; padding: 24px; z-index: 1000;
-  overflow-y: auto; overflow-x: hidden;
+/* ===== Overlay / Modal ===== */
+.overlay{
+  position:fixed; inset:0; background:rgba(2,6,23,.55);
+  display:grid; place-items:center; padding:24px; z-index:1000;
 }
-.modal {
-  width: min(760px, 100%); background: var(--c-surface);
-  border: 1px solid var(--bd-soft); border-radius: 16px;
-  box-shadow: 0 30px 80px rgba(2,6,23,.35); color: var(--c-text);
-}
-.modal-header {
-  display:flex; justify-content:space-between; align-items:center;
-  padding:16px 18px; border-bottom:1px solid var(--bd-soft);
-}
-.modal-header h2 { margin:0; color:var(--c-primary); font-size:20px; }
-.icon-btn {
-  border:1px solid var(--bd-soft); background:#F3F4F6; color:#111827;
-  border-radius:8px; padding:6px 10px; cursor:pointer;
-}
-.icon-btn:hover { background:#E5E7EB; }
+.modal{
+  background: #1E3A5F !important;
+  border: 1px solid #1E3A5F;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 
-.modal-body { padding:16px 18px; }
-.grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-.field { display:grid; gap:8px; }
-.field label { font-size:13px; color:#475569; }
-select {
-  appearance:none; width:100%; padding:12px 14px; border-radius:12px;
-  border:1px solid var(--bd-strong); background:#F8FAFC; color: var(--c-text);
-  font-size:14px; outline:none;
+  width: clamp(360px, 92vw, 820px);
+  box-sizing: border-box;
+  border-radius: 24px;
+}
+
+/* ===== Header ===== */
+.modal-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:20px 24px;
+  border-bottom:1px solid var(--bd-soft);
+}
+.modal-header h2{
+  margin:0; font-size:28px; font-weight:800; letter-spacing:.2px; color:#fcfcfc;
+}
+.icon-btn{
+  background:transparent; color:#ffffff; border:1px solid var(--bd-soft);
+  width:36px; height:36px; border-radius:8px; cursor:pointer;
+}
+.icon-btn:hover{ background:rgba(255,255,255,.06); }
+
+/* ===== Body ===== */
+.modal-body{ padding:20px 24px; display:grid; gap:18px; }
+.field{ display:grid; gap:10px; }
+.field label{ color:#ffffff; font-size:14px; }
+
+/* Select escuro */
+select{
+  appearance:none; width:100%;
+  padding:12px 14px; border-radius:12px;
+  border:1px solid var(--bd-strong);
+  color:#F6FAFF; font-size:14px; outline:none;
   background-image:
-    linear-gradient(45deg, transparent 50%, var(--c-primary) 50%),
-    linear-gradient(135deg, var(--c-primary) 50%, transparent 50%);
+    linear-gradient(45deg, transparent 50%, #CFE0FF 50%),
+    linear-gradient(135deg, #CFE0FF 50%, transparent 50%);
   background-position: calc(100% - 18px) calc(1em + 2px),
                       calc(100% - 13px) calc(1em + 2px);
-  background-size: 6px 6px, 6px 6px; background-repeat: no-repeat;
-  transition: border-color .2s, box-shadow .2s, background .2s;
+  background-size: 6px 6px, 6px 6px; background-repeat:no-repeat;
 }
-select:hover { border-color: var(--c-primary); background:#FFFFFF; }
-select:focus { box-shadow: var(--focus); border-color: var(--c-accent); }
 
-.modal-footer {
-  display:flex; justify-content:flex-end; gap:12px;
-  padding:16px 18px; border-top:1px solid var(--bd-soft);
+/* Pills */
+.pills{ display:flex; flex-wrap:wrap; gap:10px; }
+.pill{
+  background:rgba(255,255,255,.10);
+  border:1px solid var(--bd-strong);
+  color:#E7F0FF;
+  padding:10px 14px;
+  border-radius:999px;
+  font-weight:700; font-size:14px;
+  cursor:pointer;
 }
-.btn {
-  --btn-bg:#F1F5F9; --btn-fg:var(--c-text); --btn-bd:var(--bd-strong);
-  border:1px solid var(--btn-bd); background:var(--btn-bg); color:var(--btn-fg);
-  border-radius:12px; padding:10px 14px; font-weight:600; cursor:pointer;
+.pill:hover{ background:rgba(255,255,255,.16); }
+.pill.active{
+  background:#FFFFFF; color:var(--c-text); border-color:transparent;
 }
-.btn:focus-visible { box-shadow: var(--focus); }
-.btn-primary { --btn-bg:var(--c-accent); --btn-fg:#0B3B2B; --btn-bd:transparent; border:1px solid transparent; }
 
-@media (max-width: 720px) {
-  .grid { grid-template-columns: 1fr; }
+/* Ano */
+.year-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.year-arrow{
+  width:40px; height:40px; border-radius:10px; cursor:pointer;
+  background:rgba(255,255,255,.08); color:#E7F0FF; border:1px solid var(--bd-strong);
+  font-size:20px; font-weight:800;
+}
+.year-arrow:disabled{ opacity:.5; cursor:not-allowed; }
+.year-box{
+  min-width:120px; text-align:center;
+  background:#FFFFFF; color:var(--c-text);
+  border-radius:10px; padding:10px 14px; font-weight:800; letter-spacing:.5px;
+}
+
+/* ===== Footer ===== */
+.modal > .modal-footer{
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid var(--bd-soft);
+  width: 94%;
+}
+.btn{
+  border-radius:12px; padding:10px 16px; font-weight:700; font-size:14px; cursor:pointer;
+  border:1px solid var(--bd-strong); background:rgba(255,255,255,.08); color:#E7F0FF;
+}
+.btn-ghost{ background:rgba(255,255,255,.08); }
+
+/* Botão Iniciar (verde) */
+.modal-footer .btn-accent{
+  --btn-green: #4ADE80;       /* base */
+  --btn-green-hover: #16A34A; /* hover */
+  background: var(--btn-green);
+  color: #FFFFFF;
+  border: 1px solid var(--btn-green);
+  box-shadow: none;
+  transition: background-color .2s ease, border-color .2s ease, transform .05s ease;
+}
+.modal-footer .btn-accent:hover{
+  background: var(--btn-green-hover);
+  border-color: var(--btn-green-hover);
+}
+.modal-footer .btn-accent:active{ transform: translateY(1px); }
+.modal-footer .btn-accent:focus-visible{
+  outline: 3px solid rgba(74, 222, 128, 0.4);
+  outline-offset: 2px;
+}
+
+/* Select menu visível no tema escuro */
+.modal select{ background:#1E3A5F; color:#FFFFFF; border:1px solid #2A4C70; }
+.modal select:focus{ border-color:#FBBF24; }
+.modal select option,
+.modal select optgroup{
+  background:#1E3A5F !important; color:#FFFFFF !important;
+}
+.modal select option:checked,
+.modal select option:hover{
+  background:#16395B !important; color:#FFFFFF !important;
 }
 </style>
