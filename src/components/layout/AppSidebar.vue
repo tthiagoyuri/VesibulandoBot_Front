@@ -7,7 +7,7 @@
 
     <div class="user">
       <div class="avatar">{{ initials }}</div>
-      <div class="name">{{ user?.name || 'Usuário' }}</div>
+      <div class="name">{{ displayName || 'Usuário' }}</div>
       <div class="email">{{ user?.email }}</div>
     </div>
 
@@ -18,51 +18,87 @@
       <RouterLink class="link" :to="{ name: 'Admin' }">Administração</RouterLink>
     </nav>
 
-    <button class="logout" @click="$emit('logout')">Sair</button>
+    <button class="logout" :disabled="logoutLoading" @click="onLogout">
+      {{ logoutLoading ? 'Saindo...' : 'Sair' }}
+    </button>
   </aside>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { RouterLink } from 'vue-router'
-import { getCurrentUser } from '../../services/auth.js' // ajuste o caminho se necessário
+import { RouterLink, useRouter } from 'vue-router'
+import { getCurrentUser, logout } from '../../services/auth.js' // ajuste o caminho se necessário
 
-// Prop continua opcional (compat), mas NÃO é obrigatória
+// Prop opcional (se o pai já passar o usuário)
 const props = defineProps({
   user: { type: Object, default: null }
 })
 
+const router = useRouter()
 const localUser = ref(null)
+const logoutLoading = ref(false)
 
-function syncUser() {
-  // Se não vier user por prop, busca do serviço de auth
-  if (!props.user) {
-    try {
-      localUser.value = getCurrentUser() || null
-    } catch {
-      localUser.value = null
-    }
+async function loadUser(force = false) {
+  try {
+    localUser.value = await getCurrentUser(force)
+  } catch {
+    localUser.value = null
   }
 }
 
+function handleExternalAuthChange() {
+  loadUser(true)
+}
+
 onMounted(() => {
-  syncUser()
-  // Atualiza se outra aba fizer login/logout
-  window.addEventListener('storage', syncUser)
+  if (!props.user) loadUser()
+  window.addEventListener('storage', handleExternalAuthChange)
+  window.addEventListener('auth:changed', handleExternalAuthChange)
 })
 onBeforeUnmount(() => {
-  window.removeEventListener('storage', syncUser)
+  window.removeEventListener('storage', handleExternalAuthChange)
+  window.removeEventListener('auth:changed', handleExternalAuthChange)
 })
 
-// Fonte única usada no template
 const user = computed(() => props.user ?? localUser.value)
 
-const initials = computed(() => {
-  if (!user.value?.name) return 'VB'
-  const parts = user.value.name.split(/[.\s_-]+/).filter(Boolean)
-  const ini = parts.slice(0, 2).map(p => p[0]?.toUpperCase()).join('')
-  return ini || 'VB'
+// Nome exibido: prioriza `nome` (back), depois `name`, senão prefixo do e-mail
+const displayName = computed(() => {
+  const u = user.value
+  if (!u) return ''
+  if (u.nome && u.nome.trim()) return u.nome.trim()
+  if (u.name && u.name.trim()) return u.name.trim()
+  if (u.email) {
+    const nick = String(u.email).split('@')[0] || ''
+    return nick ? nick.charAt(0).toUpperCase() + nick.slice(1) : ''
+  }
+  return ''
 })
+
+// Iniciais
+const initials = computed(() => {
+  if (displayName.value) {
+    const parts = displayName.value.split(/[.\s_-]+/).filter(Boolean)
+    const ini = parts.slice(0, 2).map(p => p[0]?.toUpperCase()).join('')
+    return ini || 'VB'
+  }
+  if (user.value?.email) return String(user.value.email)[0]?.toUpperCase() || 'VB'
+  return 'VB'
+})
+
+async function onLogout() {
+  if (logoutLoading.value) return
+  logoutLoading.value = true
+  try {
+    await logout()                    // POST /auth/logout
+    window.dispatchEvent(new Event('auth:changed')) // avisa o app (opcional)
+  } catch (e) {
+    // mesmo se falhar, seguimos o fluxo de segurança
+  } finally {
+    logoutLoading.value = false
+  }
+  router.replace({ name: 'Login' })
+}
 </script>
 
 <style scoped>
@@ -85,15 +121,8 @@ const initials = computed(() => {
   align-items: center;
   gap: 10px;
 }
-.logo { 
-  font-size: 28px; 
-  color: #ffffff;
-}
-.title { 
-  font-weight: 800; 
-  letter-spacing: .3px; 
-  color: #ffffff;
-}
+.logo { font-size: 28px; color: #ffffff; }
+.title { font-weight: 800; letter-spacing: .3px; color: #ffffff; }
 
 .user {
   display: grid;
@@ -115,23 +144,15 @@ const initials = computed(() => {
   font-weight: 800;
   margin: 0 auto;
 }
-.name { 
-  font-weight: 700;
-}
-.email { 
-  font-size: 12px; 
-  color: #6b7280; 
-}
+.name { font-weight: 700; }
+.email { font-size: 12px; color: #6b7280; }
 
-.nav { 
-  display: grid; 
-  gap: 12px;
-}
+.nav { display: grid; gap: 12px; }
 
 .link {
-  display: flex;                /* Flex para centralizar */
-  align-items: center;          /* Centraliza vertical */
-  justify-content: center;      /* Centraliza horizontal */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: #f3f4f6;
   color: #111827;
   padding: 14px;
@@ -140,19 +161,8 @@ const initials = computed(() => {
   font-weight: 600;
   transition: background-color 0.3s, color 0.3s, transform 0.1s;
 }
-
-/* Hover bonito */
-.link:hover {
-  background-color: #079685;
-  color: #fff;
-}
-
-/* Efeito clique */
-.link:active {
-  transform: scale(0.97);
-}
-
-/* Quando ativo pela rota */
+.link:hover { background-color: #079685; color: #fff; }
+.link:active { transform: scale(0.97); }
 .link.router-link-exact-active {
   background-color: #079685;
   color: #fff;
@@ -168,9 +178,8 @@ const initials = computed(() => {
   font-weight: 700;
   cursor: pointer;
   width: 100%;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s, opacity .2s;
 }
-.logout:hover {
-  background-color: #ff0000;
-}
+.logout:disabled { opacity: .6; cursor: not-allowed; }
+.logout:hover:not(:disabled) { background-color: #ff0000; }
 </style>
