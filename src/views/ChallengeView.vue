@@ -62,8 +62,8 @@
 
               <!-- APENAS 2 BOTÕES: Pular e Confirmar -->
               <div class="actions-row">
-                <button class="btn btn-skip" @click="skipQuestion">Pular</button>
-                <button class="btn btn-confirm" @click="confirmAnswer">Confirmar</button>
+                <button class="btn btn-skip" @click="skipQuestion" :disabled="loading">Pular</button>
+                <button class="btn btn-confirm" @click="confirmAnswer" :disabled="loading || !selectedOption">Confirmar</button>
               </div>
             </article>
           </div>
@@ -116,6 +116,49 @@ import { logout as doLogout } from '@/services/auth.js'
 
 const router = useRouter()
 
+/* ======================= API ======================= */
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+
+async function apiFetch(path, { method = 'GET', headers = {}, body } = {}) {
+  const token = localStorage.getItem('token')
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...headers
+    },
+    body: body ? JSON.stringify(body) : undefined
+  })
+  const isJson = res.headers.get('content-type')?.includes('application/json')
+  const data = isJson ? await res.json().catch(() => null) : null
+  if (!res.ok) throw new Error(data?.message || `HTTP ${res.status}`)
+  return data
+}
+
+async function apiStartChallenge(cfg) {
+  // POST /challenges/start -> { challengeId, question }
+  return apiFetch('/challenges/start', { method: 'POST', body: cfg })
+}
+async function apiNextQuestion(challengeId) {
+  // GET /challenges/:id/next -> { finished, question? }
+  return apiFetch(`/challenges/${challengeId}/next`)
+}
+async function apiSubmitAnswer({ challengeId, questionId, answer }) {
+  // POST /challenges/:id/answers
+  return apiFetch(`/challenges/${challengeId}/answers`, {
+    method: 'POST',
+    body: { questionId, answer }
+  })
+}
+async function apiSkipQuestion({ challengeId, questionId }) {
+  // POST /challenges/:id/skip
+  return apiFetch(`/challenges/${challengeId}/skip`, {
+    method: 'POST',
+    body: { questionId }
+  })
+}
+
 /* ---------- Opções ---------- */
 const simulados = [
   { label: 'Simulado Misturado ENEM', value: 'enem-mix' },
@@ -129,7 +172,7 @@ const isConfigured = ref(false)
 
 /* ---------- Config ---------- */
 const config = reactive({
-  // podem ter valores padrão para o modal, mas o resumo só mostra quando isConfigured = true
+  // default só para o modal; resumo mostra — até configurar
   simulado: 'enem-mix',
   categoria: 'todas',
   dificuldade: 'medio',
@@ -139,15 +182,13 @@ const config = reactive({
   dificuldadeLabel: 'Médio'
 })
 
-/* ---------- Labels do Resumo (mostram — antes de configurar) ---------- */
+/* ---------- Labels do Resumo ---------- */
 const labelSimulado = computed(() =>
   isConfigured.value
     ? (config.simuladoLabel || simulados.find(s => s.value === config.simulado)?.label || '—')
     : '—'
 )
-const labelCategoria = computed(() =>
-  isConfigured.value ? (config.categoriaLabel || '—') : '—'
-)
+const labelCategoria = computed(() => (isConfigured.value ? (config.categoriaLabel || '—') : '—'))
 const labelDificuldade = computed(() =>
   isConfigured.value
     ? (config.dificuldadeLabel || ({ facil:'Fácil', medio:'Médio', dificil:'Difícil' }[config.dificuldade] || '—'))
@@ -158,29 +199,109 @@ const labelAno = computed(() => (isConfigured.value ? (config.ano ?? '—') : '�
 /* ---------- Modal ---------- */
 const showModal = ref(false)
 function openConfig() { showModal.value = true }
-function applyConfig(payload) {
+async function applyConfig(payload) {
   Object.assign(config, payload)
   showModal.value = false
 
-  // ao iniciar, marca como configurado e inicia timers
+  // marca como configurado e timers
   isConfigured.value = true
   resetResumo()
   resetCountdown()
   iniciarResumo()
   iniciarCountdown()
+
+  // inicia o desafio no backend e carrega a primeira questão
+  await startChallenge()
 }
 
-/* ---------- Questão (demo) ---------- */
-const question = reactive({
-  title: 'Qual é a fórmula para calcular a área de um triângulo?',
-  options: [
-    { key: 'A', text: 'A = (base × altura) ÷ 2' },
-    { key: 'B', text: 'A = base × altura' },
-    { key: 'C', text: 'A = (base + altura) ÷ 2' },
-    { key: 'D', text: 'A = base ÷ altura' }
-  ]
-})
-const selectedOption = ref('A')
+/* ============== Estado do desafio (backend) ============== */
+const challengeId = ref(null)
+const loading = ref(false)
+const finished = ref(false)
+const error = ref(null)
+
+// question precisa existir no template; começa vazio
+const question = reactive({ id: null, title: '', options: [] })
+const selectedOption = ref(null)
+
+function setQuestion(q) {
+  question.id = q?.id ?? null
+  question.title = q?.title ?? ''
+  question.options = Array.isArray(q?.options) ? q.options : []
+  selectedOption.value = null
+}
+
+async function startChallenge() {
+  loading.value = true; error.value = null
+  try {
+    const res = await apiStartChallenge({
+      simulado: config.simulado,
+      categoria: config.categoria,
+      dificuldade: config.dificuldade,
+      ano: config.ano
+    })
+    challengeId.value = res.challengeId
+    finished.value = !res.question
+    setQuestion(res.question)
+  } catch (e) {
+    error.value = e.message || 'Falha ao iniciar desafio'
+    setQuestion(null)
+  } finally {
+    loading.value = false
+  }
+}
+
+async function startNewQuestion() {
+  // agora busca a próxima questão (não navega)
+  if (!challengeId.value) return
+  loading.value = true; error.value = null
+  try {
+    const res = await apiNextQuestion(challengeId.value)
+    if (res.finished) {
+      finished.value = true
+      setQuestion(null)
+    } else {
+      setQuestion(res.question)
+    }
+  } catch (e) {
+    error.value = e.message || 'Falha ao buscar próxima questão'
+  } finally {
+    loading.value = false
+  }
+}
+
+async function confirmAnswer() {
+  if (!challengeId.value || !question.id || !selectedOption.value) return
+  loading.value = true; error.value = null
+  try {
+    await apiSubmitAnswer({
+      challengeId: challengeId.value,
+      questionId: question.id,
+      answer: selectedOption.value
+    })
+    await startNewQuestion()
+  } catch (e) {
+    error.value = e.message || 'Falha ao enviar resposta'
+  } finally {
+    loading.value = false
+  }
+}
+
+async function skipQuestion() {
+  if (!challengeId.value || !question.id) return
+  loading.value = true; error.value = null
+  try {
+    await apiSkipQuestion({
+      challengeId: challengeId.value,
+      questionId: question.id
+    })
+    await startNewQuestion()
+  } catch (e) {
+    error.value = e.message || 'Falha ao pular questão'
+  } finally {
+    loading.value = false
+  }
+}
 
 /* ---------- Timers ---------- */
 // Countdown (questão) — inicia no "Iniciar"
@@ -197,7 +318,6 @@ onBeforeUnmount(() => stopAllTimers())
 
 /* ---- RESUMO (count-up) ---- */
 const resumoParado = ref(true)
-
 function iniciarResumo() {
   if (elapsedTick) { clearInterval(elapsedTick); elapsedTick = null }
   elapsedTick = setInterval(() => { elapsedSeconds.value += 1 }, 1000)
@@ -207,10 +327,7 @@ function pararResumo() {
   if (elapsedTick) { clearInterval(elapsedTick); elapsedTick = null }
   resumoParado.value = true
 }
-function resetResumo() {
-  pararResumo()
-  elapsedSeconds.value = 0
-}
+function resetResumo() { pararResumo(); elapsedSeconds.value = 0 }
 
 /* ---- COUNTDOWN (questão) ---- */
 function iniciarCountdown() {
@@ -226,61 +343,28 @@ function iniciarCountdown() {
     }
   }, 1000)
 }
-function pararCountdown() {
-  if (countdownTick) { clearInterval(countdownTick); countdownTick = null }
-}
-function resetCountdown() {
-  pararCountdown()
-  secondsLeft.value = COUNTDOWN_START
-}
+function pararCountdown() { if (countdownTick) { clearInterval(countdownTick); countdownTick = null } }
+function resetCountdown() { pararCountdown(); secondsLeft.value = COUNTDOWN_START }
 
 /* ---- Utils ---- */
-function stopAllTimers() {
-  pararCountdown()
-  pararResumo()
-}
-
-function formatMMSS(t) {
-  const m = Math.floor(t / 60).toString().padStart(2, '0')
-  const s = (t % 60).toString().padStart(2, '0')
-  return `${m}:${s}`
-}
-function formatHHMMSS(t) {
-  const h = Math.floor(t / 3600).toString().padStart(2, '0')
-  const m = Math.floor((t % 3600) / 60).toString().padStart(2, '0')
-  const s = (t % 60).toString().padStart(2, '0')
-  return `${h}:${m}:${s}`
-}
+function stopAllTimers() { pararCountdown(); pararResumo() }
+function formatMMSS(t){ const m = Math.floor(t/60).toString().padStart(2,'0'); const s=(t%60).toString().padStart(2,'0'); return `${m}:${s}` }
+function formatHHMMSS(t){ const h=Math.floor(t/3600).toString().padStart(2,'0'); const m=Math.floor((t%3600)/60).toString().padStart(2,'0'); const s=(t%60).toString().padStart(2,'0'); return `${h}:${m}:${s}` }
 
 const timeDownMMSS  = computed(() => formatMMSS(secondsLeft.value))       // countdown (MM:SS)
 const timeUpHHMMSS  = computed(() => formatHHMMSS(elapsedSeconds.value))  // count-up (HH:MM:SS)
 
-// Timer color thresholds para o countdown
 const timerColor = computed(() => {
   if (secondsLeft.value <= 50) return '#ef4444'
   if (secondsLeft.value <= 110) return '#f59e0b'
   return '#22c55e'
 })
 
-/* ---------- Ações ---------- */
-function startNewQuestion() {
-  router.push({
-    path: '/challenge/questions/1',
-    query: {
-      simulado: config.simulado,
-      categoria: config.categoria,
-      dificuldade: config.dificuldade,
-      ano: String(config.ano)
-    }
-  })
-}
-function confirmAnswer() { startNewQuestion() }
-function skipQuestion()   { startNewQuestion() }
+/* ---------- Ações (antigas rotas removidas) ---------- */
+// startNewQuestion(), confirmAnswer() e skipQuestion() já integram com a API
 
 /* Rodapé: para apenas o cronômetro do RESUMO */
-function finalizarResumo() {
-  pararResumo()
-}
+function finalizarResumo() { pararResumo() }
 
 /* ---------- Logout ---------- */
 function onLogout() {
