@@ -1,41 +1,43 @@
-const TOKEN_KEY = 'caio@w'
-const USER_KEY = 'caio'
+const BASE = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000/api/v1').replace(/\/$/, '')
 
-export function login({ email, password }) {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const ok = email && password && password.length >= 3
-      if (ok) {
-        const name = email.split('@')[0]
-        const user = { email, name: capitalize(name) }
-        localStorage.setItem(TOKEN_KEY, 'demo-token')
-        localStorage.setItem(USER_KEY, JSON.stringify(user))
-        resolve(user)
-      } else {
-        reject(new Error('Credenciais inválidas'))
-      }
-    }, 300)
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(`${BASE}${path}`, {
+    method: opts.method || 'GET',
+    headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+    credentials: 'include',
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
   })
-}
-
-export function logout() {
-  localStorage.removeItem(TOKEN_KEY)
-  localStorage.removeItem(USER_KEY)
-}
-
-export function isAuthenticated() {
-  return !!localStorage.getItem(TOKEN_KEY)
-}
-
-export function getCurrentUser() {
-  try {
-    const raw = localStorage.getItem(USER_KEY)
-    return raw ? JSON.parse(raw) : null
-  } catch {
-    return null
+  if (!res.ok) {
+    let msg = 'Erro na requisição'
+    try { const j = await res.json(); msg = j.error || msg } catch {}
+    throw new Error(msg)
   }
+  return res.status === 204 ? null : res.json()
 }
 
-function capitalize(s = '') {
-  return s.charAt(0).toUpperCase() + s.slice(1)
+let _sessionLoaded = false
+let _user = null
+
+export async function getCurrentUser(force = false) {
+  if (!_sessionLoaded || force) {
+    try { _user = await apiFetch('/auth/me') } catch { _user = null }
+    _sessionLoaded = true
+  }
+  return _user
+}
+
+export async function register({ email, password }) {
+  return apiFetch('/auth/register', { method: 'POST', body: { email, senha: password } })
+}
+export async function login({ email, password }) {
+  const u = await apiFetch('/auth/login', { method: 'POST', body: { email, senha: password } })
+  _user = u; _sessionLoaded = true
+  return u
+}
+export async function logout() {
+  await apiFetch('/auth/logout', { method: 'POST' })
+  _user = null; _sessionLoaded = false
+}
+export async function setPassword({ password, confirm }) {
+  return apiFetch('/auth/password/set', { method: 'POST', body: { senha: password, confirmacao: confirm } })
 }
