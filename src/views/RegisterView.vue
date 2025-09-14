@@ -11,11 +11,14 @@
           <input v-model="password" type="password" placeholder="sua senha" required minlength="6" autocomplete="new-password" />
           <input v-model="confirmPassword" type="password" placeholder="confirmar senha" required minlength="6" autocomplete="new-password" />
 
-          <small v-if="confirmPassword && !passwordMatches" class="warn">
+          <small v-if="(password || confirmPassword) && !hasMinLength" class="warn">
+            A senha deve ter pelo menos 6 caracteres.
+          </small>
+            <small v-else-if="(password || confirmPassword) && !passwordsEqual" class="warn">
             As senhas não conferem.
           </small>
 
-          <button type="submit" :disabled="loading || !passwordMatches">
+          <button type="submit" :disabled="loading || !canSubmit">
             {{ loading ? 'Enviando...' : 'Registrar-se' }}
           </button>
 
@@ -43,8 +46,6 @@ import { ref, computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import SiteHeader from '../components/layout/SiteHeader.vue'
 import { register as apiRegister } from '@/services/auth'
-
-// ajuste o caminho se necessário; aqui supus Register.vue em src/views
 import googleLogo from '../assets/google.png'
 
 const router = useRouter()
@@ -57,24 +58,34 @@ const loading = ref(false)
 const error = ref('')
 const success = ref(false)
 
-const passwordMatches = computed(() =>
-  password.value.length >= 6 &&
-  confirmPassword.value.length >= 6 &&
+/* >>> validações separadas <<< */
+const hasMinLength = computed(() =>
+  password.value.length >= 6 && confirmPassword.value.length >= 6
+)
+const passwordsEqual = computed(() =>
   password.value === confirmPassword.value
 )
+const canSubmit = computed(() => hasMinLength.value && passwordsEqual.value)
 
 async function onSubmit() {
   error.value = ''
   success.value = false
 
-  if (!passwordMatches.value) {
-    error.value = 'As senhas não conferem.'
+  if (!canSubmit.value) {
+    error.value = !hasMinLength.value
+      ? 'A senha deve ter pelo menos 6 caracteres.'
+      : 'As senhas não conferem.'
     return
   }
 
   loading.value = true
   try {
-    await apiRegister({ email: email.value, password: password.value })
+    await apiRegister({
+      email: email.value,
+      password: password.value,
+      confirm: confirmPassword.value, // opcional (validação local)
+      name: name.value,
+    })
     success.value = true
     router.push({ name: 'Login', query: { registered: '1' } })
   } catch (e) {
@@ -84,10 +95,14 @@ async function onSubmit() {
   }
 }
 
+/* mantém seu Google como está, se preferir */
 function loginWithGoogle() {
-  const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
-  const url = `${base}/auth/google/login`
-  window.location.href = url
+  const protocol = import.meta.env.VITE_API_PROTOCOL || 'http'
+  const host     = import.meta.env.VITE_API_HOST || '127.0.0.1'
+  const port     = import.meta.env.VITE_API_PORT || '8000'
+  const prefix   = (import.meta.env.VITE_API_PREFIX || '/api/v1').replace(/\/$/, '')
+  const base     = `${protocol}://${host}:${port}${prefix}`
+  window.location.href = `${base}/auth/google/login`
 }
 </script>
 

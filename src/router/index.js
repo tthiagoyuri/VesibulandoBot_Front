@@ -24,7 +24,12 @@ const routes = [
   { path: '/admin', name: 'Admin', component: AdminView, meta: { requiresAuth: true } },
 
   // criar senha após login com Google
-  { path: '/criar-senha', name: 'CreatePassword', component: () => import('@/views/CreatePassword.vue'), meta: { requiresAuth: true } },
+  { 
+  path: '/criar-senha',
+  name: 'CreatePassword',
+  component: () => import('@/views/CreatePassword.vue'),
+  meta: { requiresAuth: true }
+},
 ]
 
 const router = createRouter({ history: createWebHistory(), routes })
