@@ -144,15 +144,17 @@ function onLogout() {
 
 <style scoped>
 .study {
+  min-height: 100vh;
   height: 100vh;
-  background: #0d2a3f;
+  background: linear-gradient(-45deg, #0d2a3f, #1a3850, #2d4a63, #1c3d56);
   background-size: 400% 400%;
   animation: gradientAnimation 15s ease infinite;
-  padding: 24px;
+  padding: 16px;
   box-sizing: border-box;
   position: relative;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .study-top {
@@ -160,10 +162,11 @@ function onLogout() {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  max-width: 1300px;
+  max-width: 1400px;
   margin: 0 auto 16px;
   width: 100%;
   flex-shrink: 0;
+  z-index: 10;
 }
 
 .brand {
@@ -173,17 +176,19 @@ function onLogout() {
   color: #ffffff;
   font-weight: 700;
   letter-spacing: 0.4px;
+  font-size: 18px;
 }
 
 .brand img {
   width: 36px;
   height: 36px;
+  object-fit: contain;
 }
 
 .menu-toggle {
   appearance: none;
   border: none;
-  background: #1a3850;
+  background: rgba(26, 56, 80, 0.9);
   color: #ffffff;
   font-weight: 600;
   padding: 10px 14px;
@@ -193,48 +198,37 @@ function onLogout() {
   gap: 8px;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  backdrop-filter: blur(10px);
 }
 
 .container {
   display: grid;
-  grid-template-columns: 280px 1fr 280px;
+  grid-template-columns: minmax(240px, 280px) 1fr minmax(240px, 280px);
   gap: 16px;
-  max-width: 1300px;
-  margin:  auto;
+  max-width: 1400px;
+  margin: 0 auto;
   flex: 1;
   width: 100%;
   min-height: 0;
-  height: calc(100vh - 24px - 52px - 16px - 24px);
-}
-
-.sidebar-slot {
-  height: 100%;
+  height: calc(100vh - 32px - 52px - 16px);
   overflow: hidden;
 }
 
-.sidebar-slot > * {
-  height: 100%;
-}
-
-.chat-slot {
-  height: 100%;
-  display: flex;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.chat-slot > * {
-  flex: 1;
-  min-height: 0;
-  height: 100%;
-}
-
+.sidebar-slot,
+.chat-slot,
 .quick-slot {
   height: 100%;
+  min-height: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
+.sidebar-slot > *,
+.chat-slot > *,
 .quick-slot > * {
+  flex: 1;
+  min-height: 0;
   height: 100%;
 }
 
@@ -276,9 +270,9 @@ function onLogout() {
   top: 0;
   bottom: 0;
   left: 0;
-  width: 300px;
-  max-width: 85%;
-  background: #102d44;
+  width: min(300px, 85vw);
+  background: rgba(16, 45, 68, 0.95);
+  backdrop-filter: blur(10px);
   padding: 12px;
   z-index: 100;
   display: flex;
@@ -290,6 +284,7 @@ function onLogout() {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .mobile-sidebar-header .close {
@@ -304,24 +299,37 @@ function onLogout() {
 }
 
 .mobile-sidebar-panel :deep(.sidebar) {
-  height: 100%;
+  flex: 1;
   border-radius: 12px;
+  min-height: 0;
 }
 
-@media (max-width: 1100px) {
+/* Breakpoints responsivos */
+@media (max-width: 1200px) {
   .container { 
-    grid-template-columns: 240px 1fr 240px; 
+    grid-template-columns: minmax(220px, 260px) 1fr minmax(220px, 260px);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 1000px) {
+  .container { 
+    grid-template-columns: 200px 1fr 200px;
+    gap: 10px;
   }
 }
 
 @media (max-width: 900px) {
   .study {
-    padding: 16px 12px 24px;
+    padding: 12px;
+    height: 100vh;
+    overflow: hidden;
   }
 
   .study-top {
     align-items: center;
-    max-width: 620px;
+    max-width: none;
+    margin-bottom: 12px;
   }
 
   .menu-toggle {
@@ -332,30 +340,54 @@ function onLogout() {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    max-width: 620px;
+    max-width: none;
     width: 100%;
+    height: calc(100vh - 24px - 52px - 12px);
     min-height: 0;
-    flex: 1;
-    height: calc(100vh - 16px - 52px - 16px - 24px);
   }
 
   .chat-slot {
     flex: 1;
     min-height: 0;
+    overflow: hidden;
   }
 
-  .chat-slot > * {
-    flex: 1;
-    min-height: 0;
-    height: 100%;
-  }
-
-  .sidebar-slot {
-    display: none;
-  }
-
+  .sidebar-slot,
   .quick-slot {
     display: none;
   }
+}
+
+@media (max-width: 480px) {
+  .study {
+    padding: 8px;
+  }
+  
+  .study-top {
+    margin-bottom: 8px;
+  }
+  
+  .brand {
+    font-size: 16px;
+  }
+  
+  .brand img {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .container {
+    gap: 8px;
+    height: calc(100vh - 16px - 48px - 8px);
+  }
+}
+
+/* Correção para evitar scroll horizontal */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: hidden;
 }
 </style>
