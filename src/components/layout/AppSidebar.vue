@@ -7,7 +7,7 @@
 
     <div class="user">
       <div class="avatar">{{ initials }}</div>
-      <div class="name">{{ displayName || 'Usuário' }}</div>
+      <div class="name">{{ displayName || 'Usuario' }}</div>
       <div class="email">{{ user?.email }}</div>
     </div>
 
@@ -15,7 +15,7 @@
       <RouterLink class="link" :to="{ name: 'Study' }">Modo Estudo</RouterLink>
       <RouterLink class="link" :to="{ name: 'Challenge' }">Modo Desafio</RouterLink>
       <RouterLink class="link" :to="{ name: 'Performance' }">Performance</RouterLink>
-      <RouterLink class="link" :to="{ name: 'Admin' }">Administração</RouterLink>
+      <RouterLink class="link" :to="{ name: 'Admin' }">Administracao</RouterLink>
     </nav>
 
     <button class="logout" :disabled="logoutLoading" @click="onLogout">
@@ -27,9 +27,8 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { getCurrentUser, logout } from '../../services/auth.js' // ajuste o caminho se necessário
+import { getCurrentUser, logout } from '../../services/auth.js'
 
-// Prop opcional (se o pai já passar o usuário)
 const props = defineProps({
   user: { type: Object, default: null }
 })
@@ -62,7 +61,6 @@ onBeforeUnmount(() => {
 
 const user = computed(() => props.user ?? localUser.value)
 
-// Nome exibido: prioriza `nome` (back), depois `name`, senão prefixo do e-mail
 const displayName = computed(() => {
   const u = user.value
   if (!u) return ''
@@ -75,7 +73,6 @@ const displayName = computed(() => {
   return ''
 })
 
-// Iniciais
 const initials = computed(() => {
   if (displayName.value) {
     const parts = displayName.value.split(/[.\s_-]+/).filter(Boolean)
@@ -90,10 +87,10 @@ async function onLogout() {
   if (logoutLoading.value) return
   logoutLoading.value = true
   try {
-    await logout()                    // POST /auth/logout
-    window.dispatchEvent(new Event('auth:changed')) // avisa o app (opcional)
+    await logout()
+    window.dispatchEvent(new Event('auth:changed'))
   } catch (e) {
-    // mesmo se falhar, seguimos o fluxo de segurança
+    // segue fluxo mesmo em erro
   } finally {
     logoutLoading.value = false
   }
@@ -182,4 +179,10 @@ async function onLogout() {
 }
 .logout:disabled { opacity: .6; cursor: not-allowed; }
 .logout:hover:not(:disabled) { background-color: #ff0000; }
+
+@media (max-width: 900px) {
+  .sidebar {
+    max-height: calc(100dvh - 24px);
+  }
+}
 </style>
