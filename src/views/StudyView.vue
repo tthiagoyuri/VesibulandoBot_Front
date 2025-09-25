@@ -63,7 +63,7 @@ import { sendMessageToBot } from '../services/chat.js'
 import AppSidebar from '../components/layout/AppSidebar.vue'
 import ChatWindow from '../components/chat/ChatWindow.vue'
 import QuickQuestions from '../components/quick/QuickQuestions.vue'
-import logoUrl from '../assets/icone.ico'
+import logoUrl from '../assets/Icone.ico'
 
 const router = useRouter()
 const route = useRoute()
