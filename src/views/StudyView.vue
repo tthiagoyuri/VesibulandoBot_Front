@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="study">
     <div class="container">
       <!-- Coluna Esquerda -->
@@ -30,19 +30,22 @@ import ChatWindow from '../components/chat/ChatWindow.vue'
 import QuickQuestions from '../components/quick/QuickQuestions.vue'
 
 const router = useRouter()
-const user = ref(getCurrentUser())
+const user = ref(null)
 const messages = ref([]) // { from: 'bot'|'user', text: string, at: number }
 const sending = ref(false)
 
-onMounted(() => {
-  if (!user.value) {
+onMounted(async () => {
+  const currentUser = await getCurrentUser()
+  if (!currentUser) {
     router.push({ name: 'Login' })
     return
   }
-  // Mensagem de boas-vindas
+
+  user.value = currentUser
+  const displayName = currentUser.name || currentUser.email || 'estudante'
   messages.value.push({
     from: 'bot',
-    text: `Olá, ${user.value.name}! Bem-vindo ao Modo Estudo. O que quer revisar hoje?`,
+    text: 'Ola, ' + displayName + '! Bem-vindo ao Modo Estudo. O que quer revisar hoje?',
     at: Date.now(),
   })
 })
@@ -58,9 +61,19 @@ async function handleSend(text) {
   messages.value.push({ from: 'user', text: clean, at: Date.now() })
   sending.value = true
 
-  const reply = await sendMessageToBot(clean)
-  messages.value.push({ from: 'bot', text: reply, at: Date.now() })
-  sending.value = false
+  try {
+    const reply = await sendMessageToBot(clean)
+    messages.value.push({ from: 'bot', text: reply, at: Date.now() })
+  } catch (error) {
+    console.error('Erro ao enviar mensagem para o bot', error)
+    messages.value.push({
+      from: 'bot',
+      text: 'Nao consegui responder agora. Tente novamente em instantes.',
+      at: Date.now(),
+    })
+  } finally {
+    sending.value = false
+  }
 }
 
 function handleQuickPick(text) {
