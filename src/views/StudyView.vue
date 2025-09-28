@@ -136,9 +136,12 @@ function handleQuickPick(text) {
   handleSend(text)
 }
 
-function onLogout() {
-  logout()
-  router.push({ name: 'Login' })
+async function onLogout() {
+  try {
+    await logout()
+  } finally {
+    router.replace({ name: 'Login', query: { logout: '1' } })
+  }
 }
 </script>
 
