@@ -20,31 +20,18 @@
 
       <!-- Conteúdo -->
       <div class="center">
-        <!-- Cabeçalho -->
-        <header class="header">
-          <h1>Modo Desafio</h1>
-          <p class="header-sub">Simulados, foco e progresso contínuo.</p>
-        </header>
+       
 
-        <!-- Painel: configurar + dica -->
+        <!-- Painel: configurar  -->
         <section class="panel panel-config">
           <header class="panel-top">
             <div>
               <h2>Configurar desafio</h2>
-              <p class="panel-sub">Simulados, foco e progresso contínuo. Mude as opções quando quiser.</p>
+              <p class="header-sub">Simulados, foco e progresso contínuo. Mude as opções quando quiser.</p>
             </div>
             <button class="btn btn-config" @click="openConfig">Configurar desafio</button>
           </header>
 
-          <div class="callout">
-            <div class="badge" aria-hidden="true">Dica:</div>
-            <div class="callout-body">
-              <p>
-                Você fará questões no formato do simulado escolhido.
-                Receba feedback imediato e acompanhe sua performance.
-              </p>
-            </div>
-          </div>
         </section>
 
         <!-- Grid principal: questão + resumo -->
@@ -75,11 +62,13 @@
               </div>
 
               <!-- APENAS 2 BOTÕES: Pular e Confirmar -->
-              <div class="actions-row">
-                <button class="btn btn-skip" @click="skipQuestion" :disabled="loading">Pular</button>
-                <button class="btn btn-confirm" @click="confirmAnswer" :disabled="loading || !selectedOption">Confirmar</button>
-              </div>
+              
             </article>
+            <!-- A��es no rodap� do painel -->
+            <div class="actions-row">
+              <button class="btn btn-skip" @click="skipQuestion" :disabled="loading">Pular</button>
+              <button class="btn btn-confirm" @click="confirmAnswer" :disabled="loading || !selectedOption">Confirmar</button>
+            </div>
           </div>
 
           <!-- Painel resumo -->
@@ -105,7 +94,7 @@
             :disabled="resumoParado"
             :aria-pressed="resumoParado ? 'true' : 'false'"
           >
-            {{ resumoParado ? 'Finalizado' : 'Finalizar' }}
+            {{ resumoParado ? 'Finalizar' : 'Finalizar' }}
           </button>
         </footer>
       </div>
@@ -504,7 +493,7 @@ watch(() => route.fullPath, () => {
 .panel-config{ padding:16px; margin-top:12px; }
 .panel-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px;color: #F1F5F9; }
 .panel-top h2{ margin:0; color:var(--c-text); }
-.panel-sub{ margin:4px 0 0 0; color:#6b7280; }
+.panel-sub{ margin:4px 0 0 0; color:#999b9e; }
 
 /* ===== Botões ===== */
 .btn{ --bg:#F1F5F9; --fg:var(--c-text); --bd:var(--bd-strong);
@@ -520,7 +509,7 @@ watch(() => route.fullPath, () => {
 .btn-config:active{ transform:translateY(0); }
 
 /* ===== Grid ===== */
-.grid-panels{ display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-top:16px; min-width:0; }
+.grid-panels{ display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-top:16px; min-width:0; padding:0 16px; }
 .panel-question{ padding:16px; }
 .panel-title{ display:flex; align-items:center; margin-bottom:8px; }
 .panel-title .timer{ margin-left:auto; }
@@ -530,7 +519,7 @@ watch(() => route.fullPath, () => {
 .dot{ width:10px; height:10px; background:currentColor; border-radius:50%; display:inline-block; }
 
 /* ===== Questão / opções ===== */
-.question-card{ background:#fff; border:1px solid var(--bd-soft); border-radius:12px; padding:16px; }
+.question-card{ background:#79787869; border:1px solid var(--bd-soft); border-radius:12px; padding:16px; }
 .question-title{ margin:0 0 12px 0; color:#111827; }
 
 .options{ display:grid; gap:10px; }
@@ -561,53 +550,61 @@ watch(() => route.fullPath, () => {
 .actions-row{
   display:flex; gap:10px; justify-content:flex-end; margin-top:14px; flex-wrap:wrap;
 }
+.actions-row{ flex-shrink:0; }
 
 /* ===== Resumo ===== */
-.panel-summary{ padding:16px; color:#000; background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.12); }
-.panel-summary h3{ margin:0 0 12px 0; color:#fff; }
-.summary-list{ list-style:none; margin:0; padding:0; display:grid; gap:8px; }
-.summary-list li{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; background:rgba(255,255,255,.08); border-radius:10px; }
+.panel-summary{ padding:12px; color:#000; background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.12); }
+.panel-summary h3{ margin:0 0 8px 0; color:#fff; }
+.summary-list{ list-style:none; margin:0; padding:0; display:grid; gap:6px; }
+.summary-list li{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px; background:rgba(255,255,255,.08); border-radius:8px; }
 .summary-list li span{ color:#cfe8ff; }
 .summary-list li b{ color:#fff; }
 
-.summary-timer{ margin-top:16px; background:#fff; border-radius:12px; border:1px solid var(--bd-soft); display:grid; place-items:center; padding:24px; }
-.clock{ font-size:42px; font-weight:800; color:#1E3A5F; }
+.summary-timer{ margin-top:10px; background:#fff; border-radius:10px; border:1px solid var(--bd-soft); display:grid; place-items:center; padding:12px; }
+.clock{ font-size:28px; font-weight:800; color:#1E3A5F; }
 
 /* ===== Rodapé da página ===== */
 .page-footer{
-  margin-top:16px;
+  margin-top:auto; /* empurra ao rodapé do container */
   display:flex;
   justify-content:flex-end;
+  padding:0 16px 16px; /* afastar das bordas do container */
 }
 .btn-finish{
   background:#1f2937; color:#fff; border:none;
-  padding:12px 18px; border-radius:12px; font-weight:800;
+  height:32px; padding:0 12px; border-radius:6px; font-weight:600;
   box-shadow:0 6px 18px rgba(0,0,0,.15);
+  display:inline-flex; align-items:center; line-height:1; font-size:19px;
+  font-family:"Times New Roman", Times, serif; text-transform:none; letter-spacing:.2px;
 }
 .btn-finish:hover{ background:#111827; }
 .btn-finish:disabled{ opacity:.6; cursor:not-allowed; }
 
 /* === Dica (callout) === */
 .panel-config .callout{
-  margin-top:16px;  
+  margin-top:8px;
   background:#FFFBEB !important;
   border:1px solid rgba(251,191,36,.5) !important;
   border-radius:12px;
-  padding:14px;
+  padding:8px 10px;
+  display:grid;
+  grid-template-columns:auto 1fr;
+  align-items:center;
+  gap:8px;
 }
 .panel-config .callout .badge{
   background:#FBBF24 !important;
   color:#92400E !important;
   border-radius:999px;
-  padding:6px 10px;
-  font-weight:800; font-size:12px; display:inline-flex; align-items:center;
+  padding:4px 8px;
+  font-weight:800; font-size:11px; display:inline-flex; align-items:center;
 }
-.panel-config .callout .callout-body{ color:#92400E !important; }
+.panel-config .callout .callout-body{ color:#92400E !important; font-size:14px; line-height:1.35; }
 .panel-config .callout .callout-body p{ margin:0; }
 
 /* Botão Confirmar */
 .btn-confirm{
-  background: rgb(111, 233, 111);
+  background: rgb(72, 199, 72);
   color: var(--confirm-text);
   border: 2px solid #006e06;
   box-shadow: 0 6px 18px rgba(45,212,191,.18);
@@ -631,7 +628,7 @@ watch(() => route.fullPath, () => {
 
 @media (max-width:1100px){ .container{ grid-template-columns:240px 1fr; } }
 @media (max-width:900px){
-  .challenge{ padding:12px; height:100vh; overflow:hidden; }
+  .challenge{ padding:12px; height:auto; min-height:100vh; overflow:visible; }
   .challenge-top{
     align-items:center; max-width:none; margin-bottom:12px;
     display:grid; grid-template-columns:auto 1fr auto; /* left: menu, right: brand */
@@ -648,11 +645,24 @@ watch(() => route.fullPath, () => {
     gap:12px;
     max-width:none;
     width:100%;
-    height:calc(100vh - 24px - 52px - 12px);
+    height:auto;
     min-height:0;
+    overflow:visible;
   }
   .sidebar-slot{ display:none; }
-  .grid-panels{ grid-template-columns:1fr; }
+  .grid-panels{ 
+    grid-template-columns:1fr; 
+    display:flex; 
+    flex-direction:column; 
+    height:auto; 
+    min-height:0; 
+    overflow:visible; 
+  }
+  /* Order: summary first, then question */
+  .panel-summary{ order:1; min-height:auto; overflow:visible; }
+  .panel-question{ order:2; min-height:auto; }
+  .question-card{ flex:initial; min-height:auto; overflow:visible; }
+  .center{ height:auto; }
 }
 
 @media (max-width:480px){
@@ -660,7 +670,7 @@ watch(() => route.fullPath, () => {
   .challenge-top{ margin-bottom:8px; }
   .brand{ font-size:16px; }
   .brand img{ width:32px; height:32px; }
-  .container{ gap:8px; height:calc(100vh - 16px - 48px - 8px); }
+  .container{ gap:8px; height:auto; overflow:visible; }
 }
 
 /* Mobile sidebar overlay/panel */
@@ -679,7 +689,7 @@ watch(() => route.fullPath, () => {
 .mobile-sidebar-panel :deep(.sidebar){ flex:1; border-radius:12px; min-height:0; }
 
 /* Overrides para caber 100% da viewport no desktop */
-.center{ display:grid; grid-template-rows:auto auto 1fr auto; min-width:0; min-height:0; height:100%; background:rgba(207, 207, 207, 0.589); border:1px solid rgba(255,255,255,.12); border-radius:16px; overflow:hidden; }
+.center{ display:grid; grid-template-rows:auto auto 1fr auto; min-width:0; min-height:0; height:100%; background:#1a3850; border:1px solid rgba(255,255,255,.12); border-radius:16px; overflow:hidden; }
 .grid-panels{ height:100%; min-height:0; overflow:hidden; }
 .panel-question{ display:flex; flex-direction:column; min-height:0; }
 .question-card{ flex:1; min-height:0; overflow:auto; }

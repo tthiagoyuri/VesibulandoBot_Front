@@ -81,10 +81,10 @@ onMounted(async () => {
   }
 
   user.value = currentUser
-  const displayName = currentUser.name || currentUser.email || 'estudante'
+  const displayName = currentUser.name || 'estudante'
   messages.value.push({
     from: 'bot',
-    text: 'Ola, ' + displayName + '! Bem-vindo ao Modo Estudo. O que quer revisar hoje?',
+    text: 'Olá, ' + displayName + '! Bem-vindo ao Modo Estudo. O que quer revisar hoje?',
     at: Date.now(),
   })
 })
@@ -124,7 +124,7 @@ async function handleSend(text) {
     console.error('Erro ao enviar mensagem para o bot', error)
     messages.value.push({
       from: 'bot',
-      text: 'Nao consegui responder agora. Tente novamente em instantes.',
+      text: 'Não consegui responder agora. Tente novamente em instantes.',
       at: Date.now(),
     })
   } finally {
