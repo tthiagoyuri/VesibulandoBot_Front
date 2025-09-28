@@ -456,7 +456,19 @@ watch(() => route.fullPath, () => {
 }
 
 /* ===== Layout base ===== */
-.challenge{ height:100dvh; background:#0d2a3f; background-size:400% 400%; animation:gradientAnimation 15s ease infinite; padding:24px; box-sizing:border-box; overflow-x:hidden; }
+.challenge{
+  min-height:100vh;
+  height:100vh;
+  background:#0d2a3f;
+  background-size:400% 400%;
+  animation:gradientAnimation 15s ease infinite;
+  padding:24px;
+  box-sizing:border-box;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
 .challenge-top{
   display:flex;
   align-items:center;
@@ -480,11 +492,12 @@ watch(() => route.fullPath, () => {
   gap:8px; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.1); backdrop-filter:blur(10px);
 }
 
-.container{ display:grid; grid-template-columns:280px 1fr; gap:16px; max-width:1300px; margin:0 auto; height:calc(100% - 16px); }
+.container{ display:grid; grid-template-columns:minmax(240px,280px) 1fr; gap:16px; max-width:1300px; margin:0 auto; flex:1; width:100%; min-height:0; overflow:hidden; }
 .sidebar-slot{ height:100%; min-height:0; overflow:hidden; display:flex; flex-direction:column; }
 .sidebar-slot > *{ flex:1; min-height:0; height:100%; }
 .center{ display:grid; grid-auto-rows:auto auto 1fr auto; min-width:0; } /* rodapé vira última linha */
 
+.header{ padding:12px 16px 0 16px; }
 .header h1{ color:#fff; margin:0; font-size:28px; line-height:1.2; }
 .header-sub{ margin:4px 0 0 0; color:#cfe8ff; }
 .panel{ background:var(--c-surface); border:1px solid var(--bd-soft); border-radius:16px; box-shadow:var(--shadow); }
@@ -619,8 +632,15 @@ watch(() => route.fullPath, () => {
 @media (max-width:1100px){ .container{ grid-template-columns:240px 1fr; } }
 @media (max-width:900px){
   .challenge{ padding:12px; height:100vh; overflow:hidden; }
-  .challenge-top{ align-items:center; max-width:none; margin-bottom:12px; }
+  .challenge-top{
+    align-items:center; max-width:none; margin-bottom:12px;
+    display:grid; grid-template-columns:auto 1fr auto; /* left: menu, right: brand */
+    width:100%;
+  }
   .menu-toggle{ display:inline-flex; }
+  /* On mobile: brand to the right edge, menu left */
+  .challenge-top .brand{ grid-column:3; justify-self:end; }
+  .challenge-top .menu-toggle{ grid-column:1; justify-self:start; }
 
   .container{
     display:flex;
@@ -657,6 +677,15 @@ watch(() => route.fullPath, () => {
 .mobile-sidebar-header{ display:flex; justify-content:flex-end; margin-bottom:8px; flex-shrink:0; }
 .mobile-sidebar-header .close{ appearance:none; border:none; background:transparent; color:#ffffff; font-size:22px; cursor:pointer; padding:6px; line-height:1; }
 .mobile-sidebar-panel :deep(.sidebar){ flex:1; border-radius:12px; min-height:0; }
+
+/* Overrides para caber 100% da viewport no desktop */
+.center{ display:grid; grid-template-rows:auto auto 1fr auto; min-width:0; min-height:0; height:100%; background:rgba(207, 207, 207, 0.589); border:1px solid rgba(255,255,255,.12); border-radius:16px; overflow:hidden; }
+.grid-panels{ height:100%; min-height:0; overflow:hidden; }
+.panel-question{ display:flex; flex-direction:column; min-height:0; }
+.question-card{ flex:1; min-height:0; overflow:auto; }
+.panel-summary{ min-height:0; overflow:auto; }
+* { box-sizing:border-box; }
+html, body { overflow-x:hidden; }
 
 @keyframes gradientAnimation{
   0%{background-position:0% 50%}

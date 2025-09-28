@@ -146,7 +146,7 @@ function onLogout() {
 .study {
   min-height: 100vh;
   height: 100vh;
-  background: linear-gradient(-45deg, #0d2a3f, #1a3850, #2d4a63, #1c3d56);
+  background: #0d2a3f; /* match Challenge background */
   background-size: 400% 400%;
   animation: gradientAnimation 15s ease infinite;
   padding: 16px;
@@ -158,9 +158,9 @@ function onLogout() {
 }
 
 .study-top {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr; /* center brand in col 2 */
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   max-width: 1400px;
   margin: 0 auto 16px;
@@ -168,6 +168,10 @@ function onLogout() {
   flex-shrink: 0;
   z-index: 10;
 }
+
+/* Placement: center brand on desktop, menu at left */
+.study-top .menu-toggle { grid-column: 1; justify-self: start; }
+.study-top .brand { grid-column: 2; justify-self: center; }
 
 .brand {
   display: flex;
@@ -330,11 +334,16 @@ function onLogout() {
     align-items: center;
     max-width: none;
     margin-bottom: 12px;
+    grid-template-columns: auto 1fr auto; /* left: menu, right: brand */
   }
 
   .menu-toggle {
     display: inline-flex;
   }
+
+  /* On mobile: brand to the right edge, menu left */
+  .study-top .brand { grid-column: 3; justify-self: end; }
+  .study-top .menu-toggle { grid-column: 1; justify-self: start; }
 
   .container {
     display: flex;
