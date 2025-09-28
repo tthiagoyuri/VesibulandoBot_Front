@@ -12,14 +12,27 @@
     </div>
 
     <nav class="nav">
-      <RouterLink class="link" :to="{ name: 'Study' }">Modo Estudo</RouterLink>
-      <RouterLink class="link" :to="{ name: 'Challenge' }">Modo Desafio</RouterLink>
-      <RouterLink class="link" :to="{ name: 'Performance' }">Performance</RouterLink>
-      <RouterLink class="link" :to="{ name: 'Admin' }">Administracao</RouterLink>
+      <RouterLink class="link" :to="{ name: 'Study' }" @click="onNavigate">
+        <i class="fa-solid fa-book-open"></i>
+        <span>Modo Estudo</span>
+      </RouterLink>
+      <RouterLink class="link" :to="{ name: 'Challenge' }" @click="onNavigate">
+        <i class="fa-solid fa-trophy"></i>
+        <span>Modo Desafio</span>
+      </RouterLink>
+      <RouterLink class="link" :to="{ name: 'Performance' }" @click="onNavigate">
+        <i class="fa-solid fa-chart-line"></i>
+        <span>Performance</span>
+      </RouterLink>
+      <RouterLink class="link" :to="{ name: 'Admin' }" @click="onNavigate">
+        <i class="fa-solid fa-cog"></i>
+        <span>Administração</span>
+      </RouterLink>
     </nav>
 
     <button class="logout" :disabled="logoutLoading" @click="onLogout">
-      {{ logoutLoading ? 'Saindo...' : 'Sair' }}
+      <i class="fa-solid fa-sign-out-alt"></i>
+      <span>{{ logoutLoading ? 'Saindo...' : 'Sair' }}</span>
     </button>
   </aside>
 </template>
@@ -32,6 +45,8 @@ import { getCurrentUser, logout } from '../../services/auth.js'
 const props = defineProps({
   user: { type: Object, default: null }
 })
+
+const emit = defineEmits(['logout', 'navigate'])
 
 const router = useRouter()
 const localUser = ref(null)
@@ -83,18 +98,23 @@ const initials = computed(() => {
   return 'VB'
 })
 
+function onNavigate() {
+  emit('navigate')
+}
+
 async function onLogout() {
   if (logoutLoading.value) return
   logoutLoading.value = true
   try {
     await logout()
     window.dispatchEvent(new Event('auth:changed'))
+    emit('logout')
   } catch (e) {
     // segue fluxo mesmo em erro
+    emit('logout')
   } finally {
     logoutLoading.value = false
   }
-  router.replace({ name: 'Login' })
 }
 </script>
 
@@ -118,8 +138,15 @@ async function onLogout() {
   align-items: center;
   gap: 10px;
 }
-.logo { font-size: 28px; color: #ffffff; }
-.title { font-weight: 800; letter-spacing: .3px; color: #ffffff; }
+.logo { 
+  font-size: 28px; 
+  color: #ffffff; 
+}
+.title { 
+  font-weight: 800; 
+  letter-spacing: .3px; 
+  color: #ffffff; 
+}
 
 .user {
   display: grid;
@@ -141,48 +168,232 @@ async function onLogout() {
   font-weight: 800;
   margin: 0 auto;
 }
-.name { font-weight: 700; }
-.email { font-size: 12px; color: #6b7280; }
+.name { 
+  font-weight: 700; 
+  font-size: 14px;
+  word-wrap: break-word;
+}
+.email { 
+  font-size: 12px; 
+  color: #6b7280; 
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
 
-.nav { display: grid; gap: 12px; }
+.nav { 
+  display: grid; 
+  gap: 12px; 
+}
 
 .link {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 12px;
   background: #f3f4f6;
   color: #111827;
-  padding: 14px;
+  padding: 14px 16px;
   border-radius: 10px;
   text-decoration: none;
   font-weight: 600;
-  transition: background-color 0.3s, color 0.3s, transform 0.1s;
+  transition: all 0.3s ease;
+  font-size: 14px;
 }
-.link:hover { background-color: #079685; color: #fff; }
-.link:active { transform: scale(0.97); }
+
+.link i {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.link span {
+  text-align: center;
+}
+
+.link:hover { 
+  background-color: #079685; 
+  color: #fff; 
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(7, 150, 133, 0.2);
+}
+
+.link:active { 
+  transform: scale(0.97); 
+}
+
 .link.router-link-exact-active {
   background-color: #079685;
   color: #fff;
   font-weight: bold;
+  box-shadow: 0 4px 12px rgba(7, 150, 133, 0.3);
 }
 
 .logout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background: #ef4444;
   color: #fff;
   border: 0;
-  padding: 12px;
+  padding: 12px 16px;
   border-radius: 10px;
   font-weight: 700;
+  font-size: 14px;
   cursor: pointer;
   width: 100%;
-  transition: background-color 0.3s, opacity .2s;
+  transition: all 0.3s ease;
 }
-.logout:disabled { opacity: .6; cursor: not-allowed; }
-.logout:hover:not(:disabled) { background-color: #ff0000; }
 
+.logout i {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.logout:disabled { 
+  opacity: .6; 
+  cursor: not-allowed; 
+}
+
+.logout:hover:not(:disabled) { 
+  background-color: #dc2626; 
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.logout:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Responsividade */
 @media (max-width: 900px) {
   .sidebar {
     max-height: calc(100dvh - 24px);
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .brand {
+    gap: 8px;
+  }
+
+  .logo {
+    font-size: 24px;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .user {
+    padding: 10px;
+    gap: 4px;
+  }
+
+  .avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+
+  .name {
+    font-size: 13px;
+  }
+
+  .email {
+    font-size: 11px;
+  }
+
+  .nav {
+    gap: 8px;
+  }
+
+  .link {
+    padding: 12px 14px;
+    font-size: 13px;
+    gap: 10px;
+  }
+
+  .link i {
+    font-size: 14px;
+  }
+
+  .logout {
+    padding: 10px 14px;
+    font-size: 13px;
+    gap: 6px;
+  }
+
+  .logout i {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 600px) {
+  .sidebar {
+    padding: 10px;
+    gap: 10px;
+    border-radius: 12px;
+  }
+
+  .logo {
+    font-size: 22px;
+  }
+
+  .title {
+    font-size: 15px;
+  }
+
+  .user {
+    padding: 8px;
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  .name {
+    font-size: 12px;
+  }
+
+  .email {
+    font-size: 10px;
+  }
+
+  .link {
+    padding: 10px 12px;
+    font-size: 12px;
+    gap: 8px;
+  }
+
+  .link i {
+    font-size: 13px;
+  }
+
+  .logout {
+    padding: 9px 12px;
+    font-size: 12px;
+  }
+
+  .logout i {
+    font-size: 13px;
+  }
+}
+
+/* Ajustes para texto longo */
+@media (max-width: 280px) {
+  .link span {
+    font-size: 11px;
+  }
+
+  .name,
+  .email {
+    font-size: 10px;
+  }
+
+  .title {
+    font-size: 13px;
   }
 }
 </style>
