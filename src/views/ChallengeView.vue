@@ -411,10 +411,13 @@ const timerColor = computed(() => {
 function finalizarResumo() { pararResumo() }
 
 /* ---------- Logout ---------- */
-function onLogout() {
-  doLogout()
-  stopAllTimers()
-  router.push({ name: 'Login' })
+async function onLogout() {
+  try {
+    await doLogout()
+  } finally {
+    stopAllTimers()
+    router.replace({ name: 'Login', query: { logout: '1' } })
+  }
 }
 
 // Fecha o menu mobile ao navegar entre rotas
