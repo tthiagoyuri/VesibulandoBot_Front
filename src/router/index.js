@@ -53,6 +53,11 @@ router.beforeEach(async (to) => {
     return { name: 'Login', query: { r: to.fullPath } }
   }
 
+  // Permitir Login/Register após fluxo de logout explícito
+  if ((to.name === 'Login' || to.name === 'Register') && to.query && to.query.logout === '1') {
+    return true
+  }
+
   // 3) já logado não deve ver Login/Register
   if ((to.name === 'Login' || to.name === 'Register') && user) {
     return { name: user.has_password ? 'Home' : 'CreatePassword' }
