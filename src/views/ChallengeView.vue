@@ -1,8 +1,22 @@
 <template> 
   <div class="challenge">
+    <!-- Top bar (mobile) -->
+    <header class="challenge-top">
+      <button class="menu-toggle" type="button" @click="openSidebar">
+        <i class="fa-solid fa-bars"></i>
+        Menu
+      </button>
+      <div class="brand">
+        <img :src="logo" alt="VestibulandoBot" />
+        <span>VestibulandoBot</span>
+      </div>
+    </header>
+
     <div class="container">
       <!-- Sidebar -->
-      <AppSidebar @logout="onLogout" />
+      <div class="sidebar-slot">
+        <AppSidebar @logout="onLogout" />
+      </div>
 
       <!-- Conteúdo -->
       <div class="center">
@@ -97,6 +111,30 @@
       </div>
     </div>
 
+    <!-- Mobile sidebar -->
+    <transition name="fade">
+      <div
+        v-if="sidebarOpen"
+        class="mobile-sidebar-overlay"
+        @click="closeSidebar"
+      ></div>
+    </transition>
+
+    <transition name="slide">
+      <div
+        v-if="sidebarOpen"
+        class="mobile-sidebar-panel"
+        @click.stop
+      >
+        <div class="mobile-sidebar-header">
+          <button class="close" type="button" @click="closeSidebar">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <AppSidebar @logout="handleMobileLogout" />
+      </div>
+    </transition>
+
     <!-- MODAL DE CONFIG -->
     <ChallengeConfigModal
       v-model="showModal"
@@ -108,13 +146,30 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
+import { reactive, ref, computed, onBeforeUnmount, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import ChallengeConfigModal from '@/components/challenge/ChallengeConfigModal.vue'
 import { logout as doLogout } from '@/services/auth.js'
+import logoUrl from '../assets/Icone.ico'
 
 const router = useRouter()
+const route = useRoute()
+const sidebarOpen = ref(false)
+const logo = logoUrl
+
+function openSidebar() {
+  sidebarOpen.value = true
+}
+
+function closeSidebar() {
+  sidebarOpen.value = false
+}
+
+function handleMobileLogout() {
+  closeSidebar()
+  onLogout()
+}
 
 /* ======================= API ======================= */
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
@@ -372,6 +427,11 @@ function onLogout() {
   stopAllTimers()
   router.push({ name: 'Login' })
 }
+
+// Fecha o menu mobile ao navegar entre rotas
+watch(() => route.fullPath, () => {
+  sidebarOpen.value = false
+})
 </script>
 
 <style scoped>
@@ -397,7 +457,32 @@ function onLogout() {
 
 /* ===== Layout base ===== */
 .challenge{ height:100dvh; background:#0d2a3f; background-size:400% 400%; animation:gradientAnimation 15s ease infinite; padding:24px; box-sizing:border-box; overflow-x:hidden; }
+.challenge-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  max-width:1300px;
+  margin:0 auto 12px auto;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:#ffffff;
+  font-weight:700;
+  letter-spacing:0.4px;
+  font-size:18px;
+}
+.brand img{ width:36px; height:36px; object-fit:contain; }
+.menu-toggle{
+  appearance:none; border:none; background:rgba(26,56,80,0.9); color:#ffffff;
+  font-weight:600; padding:10px 14px; border-radius:10px; display:none; align-items:center;
+  gap:8px; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.1); backdrop-filter:blur(10px);
+}
+
 .container{ display:grid; grid-template-columns:280px 1fr; gap:16px; max-width:1300px; margin:0 auto; height:calc(100% - 16px); }
+.sidebar-slot{ height:100%; min-height:0; overflow:hidden; display:flex; flex-direction:column; }
+.sidebar-slot > *{ flex:1; min-height:0; height:100%; }
 .center{ display:grid; grid-auto-rows:auto auto 1fr auto; min-width:0; } /* rodapé vira última linha */
 
 .header h1{ color:#fff; margin:0; font-size:28px; line-height:1.2; }
@@ -532,7 +617,46 @@ function onLogout() {
 .btn-skip:active{ background:#D1D5DB; }
 
 @media (max-width:1100px){ .container{ grid-template-columns:240px 1fr; } }
-@media (max-width:900px){ .container{ grid-template-columns:1fr; } .grid-panels{ grid-template-columns:1fr; } }
+@media (max-width:900px){
+  .challenge{ padding:12px; height:100vh; overflow:hidden; }
+  .challenge-top{ align-items:center; max-width:none; margin-bottom:12px; }
+  .menu-toggle{ display:inline-flex; }
+
+  .container{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    max-width:none;
+    width:100%;
+    height:calc(100vh - 24px - 52px - 12px);
+    min-height:0;
+  }
+  .sidebar-slot{ display:none; }
+  .grid-panels{ grid-template-columns:1fr; }
+}
+
+@media (max-width:480px){
+  .challenge{ padding:8px; }
+  .challenge-top{ margin-bottom:8px; }
+  .brand{ font-size:16px; }
+  .brand img{ width:32px; height:32px; }
+  .container{ gap:8px; height:calc(100vh - 16px - 48px - 8px); }
+}
+
+/* Mobile sidebar overlay/panel */
+.fade-enter-active,.fade-leave-active{ transition:opacity 0.2s ease; }
+.fade-enter-from,.fade-leave-to{ opacity:0; }
+.slide-enter-active,.slide-leave-active{ transition:transform 0.25s ease; }
+.slide-enter-from,.slide-leave-to{ transform:translateX(-100%); }
+.mobile-sidebar-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:90; }
+.mobile-sidebar-panel{
+  position:fixed; top:0; bottom:0; left:0; width:min(300px,85vw);
+  background:rgba(16,45,68,0.95); backdrop-filter:blur(10px); padding:12px; z-index:100;
+  display:flex; flex-direction:column; box-shadow:6px 0 18px rgba(0,0,0,0.2);
+}
+.mobile-sidebar-header{ display:flex; justify-content:flex-end; margin-bottom:8px; flex-shrink:0; }
+.mobile-sidebar-header .close{ appearance:none; border:none; background:transparent; color:#ffffff; font-size:22px; cursor:pointer; padding:6px; line-height:1; }
+.mobile-sidebar-panel :deep(.sidebar){ flex:1; border-radius:12px; min-height:0; }
 
 @keyframes gradientAnimation{
   0%{background-position:0% 50%}
