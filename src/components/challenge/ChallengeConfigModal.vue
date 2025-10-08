@@ -36,34 +36,6 @@
               </button>
             </div>
           </div>
-
-          <!-- Dificuldade -->
-          <div class="field">
-            <label>Dificuldade</label>
-            <div class="pills">
-              <button
-                v-for="dif in difOptions"
-                :key="dif.value"
-                class="pill"
-                :class="{ active: local.dificuldade === dif.value }"
-                @click="local.dificuldade = dif.value"
-                type="button"
-              >
-                {{ dif.label }}
-              </button>
-            </div>
-          </div>
-
-          <!-- Ano -->
-          <div class="field">
-            <label>Ano</label>
-            <div class="year-row">
-              <button class="year-arrow" type="button" @click="decYear" :disabled="local.ano <= minYear">‹</button>
-              <div class="year-box">{{ local.ano }}</div>
-              <button class="year-arrow" type="button" @click="incYear" :disabled="local.ano >= currentYear">›</button>
-              <span class="year-hint"></span>
-            </div>
-          </div>
         </section>
 
         <!-- Rodapé -->
@@ -85,16 +57,14 @@ const props = defineProps({
     type: Object,
     default: () => ({
       simulado: 'enem-mix',
-      categoria: 'todas',
-      dificuldade: 'medio',
-      ano: new Date().getFullYear()
+      categoria: 'todas'
     })
   },
-  simulados: { type: Array, required: true } // mantém vindo do pai
+  simulados: { type: Array, required: true }
 })
 const emit = defineEmits(['update:modelValue', 'apply'])
 
-/** ---------- Mapa de categorias (agora DENTRO da modal) ---------- */
+/** ---------- Categorias ---------- */
 const categoriasBase = [
   { label: 'Todas as matérias', value: 'todas' },
   { label: 'Matemática', value: 'matematica' },
@@ -105,17 +75,9 @@ const categoriasBase = [
 const categoriasMap = {
   'enem-mix': categoriasBase,
   'enem-2022': [
-    { label: 'Todas as matérias', value: 'todas' },
-    { label: '1º dia (Linguagens e Humanas)', value: '1dia' },
-    { label: '2º dia (Natureza e Matemática)', value: '2dia' }
-  ],
-  'fuvest': [
-    { label: 'Primeira fase', value: 'fase1' },
-    { label: 'Segunda fase', value: 'fase2' }
-  ],
-  'unicamp': [
-    { label: 'Prova 1', value: 'p1' },
-    { label: 'Prova 2', value: 'p2' }
+    { label: 'Todas os Blocos', value: 'todas' },
+    { label: 'Bloco 1 (Linguagens e Humanas)', value: '1dia' },
+    { label: 'Bloco 2 (Natureza e Matemática)', value: '2dia' }
   ],
   default: categoriasBase
 }
@@ -123,28 +85,14 @@ const categoriasMap = {
 /* Estado local */
 const local = reactive({
   simulado: props.initial.simulado,
-  categoria: props.initial.categoria,
-  dificuldade: props.initial.dificuldade,
-  ano: props.initial.ano
+  categoria: props.initial.categoria
 })
 
-/* Opções derivadas */
+/* Computed */
 const categorias = computed(() => categoriasMap[local.simulado] || categoriasMap.default || [])
-const difOptions = [
-  { value: 'facil',   label: 'Fácil' },
-  { value: 'medio',   label: 'Médio' },
-  { value: 'dificil', label: 'Difícil' }
-]
-
-/* Ano (stepper) */
-const currentYear = new Date().getFullYear()
-const minYear = 2015
-function decYear() { if (local.ano > minYear) local.ano-- }
-function incYear() { if (local.ano < currentYear) local.ano++ }
 
 /* Helpers */
 function ensureCategoriaValida() {
-  if (!categorias.value.length) return
   if (!categorias.value.find(c => c.value === local.categoria)) {
     local.categoria = categorias.value[0].value
   }
@@ -164,18 +112,15 @@ function close() { emit('update:modelValue', false) }
 function apply() {
   const simuladoLabel = (props.simulados || []).find(s => s.value === local.simulado)?.label || ''
   const categoriaLabel = categorias.value.find(c => c.value === local.categoria)?.label || ''
-  const dificuldadeLabel = difOptions.find(d => d.value === local.dificuldade)?.label || ''
 
   emit('apply', {
     ...local,
     simuladoLabel,
-    categoriaLabel,
-    dificuldadeLabel
+    categoriaLabel
   })
   close()
 }
 </script>
-
 <style scoped>
 /* ===== Paleta ===== */
 :root, :host{
@@ -184,7 +129,6 @@ function apply() {
   --c-bg:#F9FAFB;
   --c-surface:#FFFFFF;
   --c-text:#1F2937;
-
   --glass: rgba(30,58,95,.92);
   --bd-soft: rgba(255,255,255,.16);
   --bd-strong: rgba(255,255,255,.26);

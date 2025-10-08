@@ -205,10 +205,8 @@ async function apiSkipQuestion({ challengeId, questionId }) {
 
 /* ---------- Opções ---------- */
 const simulados = [
-  { label: 'Simulado Misturado ENEM', value: 'enem-mix' },
-  { label: 'ENEM 2022 (Completo)', value: 'enem-2022' },
-  { label: 'FUVEST (Treino)', value: 'fuvest' },
-  { label: 'UNICAMP (Treino)', value: 'unicamp' }
+  { label: 'ENEM por Matéria', value: 'enem-mix' },
+  { label: 'ENEM por Blocos', value: 'enem-2022' },
 ]
 
 /* ---------- Estado: configurado? ---------- */
