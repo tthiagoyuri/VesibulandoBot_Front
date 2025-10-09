@@ -4,7 +4,7 @@
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="cfg-title">
         <!-- Cabeçalho -->
         <header class="modal-header">
-          <h2 id="cfg-title">Configurar Desafio</h2>
+          <h2 id="cfg-title">Filtrar Dashboard</h2>
           <button class="icon-btn" @click="close" aria-label="Fechar">✕</button>
         </header>
 
@@ -41,7 +41,7 @@
         <!-- Rodapé -->
         <footer class="modal-footer">
           <button class="btn btn-ghost" @click="close">Cancelar</button>
-          <button class="btn btn-accent" @click="apply">Iniciar</button>
+          <button class="btn btn-accent" @click="apply">Aplicar</button>
         </footer>
       </div>
     </div>
